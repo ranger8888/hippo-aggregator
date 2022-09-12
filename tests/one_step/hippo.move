@@ -6,7 +6,7 @@ module hippo_aggregator::hippo {
     use aptos_framework::coin;
     use aptos_framework::genesis;
 
-    use hippo_aggregator::aggregatorv6::{one_step_route, initialize};
+    use hippo_aggregator::aggregator::{one_step_route, initialize};
     use econia::registry::E1;
     use hippo_swap::cp_scripts;
 

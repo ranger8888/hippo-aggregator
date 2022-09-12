@@ -13,7 +13,7 @@ module hippo_aggregator::econia {
     use econia::user::{register_market_account, market_account_info, deposit_collateral};
     use econia::market::{init_econia_capability_store, register_market, place_limit_order_custodian};
     use econia::order_id;
-    use hippo_aggregator::aggregatorv6::{one_step_route, initialize};
+    use hippo_aggregator::aggregator::{one_step_route, initialize};
     use aptos_framework::aptos_account;
     // use aptos_framework::account;
 

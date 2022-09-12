@@ -13,7 +13,7 @@ module hippo_aggregator::two_step {
         DevnetBTC as BTC,
         DevnetUSDC as USDC
     };
-    use hippo_aggregator::aggregatorv6::{two_step_route, initialize};
+    use hippo_aggregator::aggregator::{two_step_route, initialize};
     use hippo_aggregator::econia::init_market_test;
 
     #[test_only]
