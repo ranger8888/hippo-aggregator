@@ -31,10 +31,6 @@ module hippo_aggregator::aggregator {
     const E_UNKNOWN_DEX: u64 = 3;
     const E_NOT_ADMIN: u64 = 4;
 
-    struct SignerStore has key {
-        signer_cap: account::SignerCapability,
-    }
-
     struct EventStore has key {
         swap_step_events: EventHandle<SwapStepEvent>,
     }
@@ -55,8 +51,6 @@ module hippo_aggregator::aggregator {
     public entry fun initialize(admin: &signer) {
         let admin_addr = signer::address_of(admin);
         assert!(admin_addr == @hippo_aggregator, E_NOT_ADMIN);
-        let (_, signer_cap) = account::create_resource_account(admin, b"signerv3");
-        move_to(admin, SignerStore { signer_cap });
         move_to(admin, EventStore {
             swap_step_events: account::new_event_handle<SwapStepEvent>(admin)
         });
