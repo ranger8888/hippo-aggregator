@@ -11,4 +11,5 @@ CoinList = { git = "https://github.com/hippospace/aptos-coin-list.git", subdir =
 
 [addresses]
 hippo_aggregator = "a61e1e86e9f596e483283727d2739ba24b919012720648c29380f9cd0a96c11a"
-
+poster = "0x02"
+poster_2 = "0x03"
