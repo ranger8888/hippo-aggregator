@@ -2,7 +2,6 @@ module hippo_aggregator::devnet {
     use coin_list::devnet_coins::{DevnetBTC as BTC, DevnetUSDC as USDC, mint_to_wallet};
     use std::signer::address_of;
     use std::string::utf8;
-    use econia::registry::E0;
 
     const BTC_AMOUNT: u64 = 100000000 * 1000;
     const USDC_AMOUNT: u64 = 100000000 * 1000 * 10000;
@@ -25,17 +24,19 @@ module hippo_aggregator::devnet {
     }
 
     #[cmd(desc=b"Create BTC-USDC pool on econia and add liquidity")]
-    public entry fun mock_deploy_econia(admin: signer) {
+    public entry fun mock_deploy_econia(admin: signer, market_id: u64) {
         use econia::market;
         use econia::user;
-        market::register_market<BTC, USDC, E0>(&admin);
-        user::register_market_account<BTC, USDC, E0>(&admin, 0);
+        let lot_size: u64 = 1000;
+        let tick_size: u64 = 1000;
+        market::register_market_pure_coin<BTC, USDC>(&admin, lot_size, tick_size);
+        user::register_market_account<BTC, USDC>(&admin, market_id, 0);
         mint_to_wallet<BTC>(&admin, BTC_AMOUNT);
         mint_to_wallet<USDC>(&admin, USDC_AMOUNT);
-        user::deposit_collateral_coinstore<BTC, USDC, E0>(&admin, 0, true, BTC_AMOUNT);
-        user::deposit_collateral_coinstore<BTC, USDC, E0>(&admin, 0, false, USDC_AMOUNT);
-        market::place_limit_order_user<BTC, USDC, E0>(&admin, address_of(&admin), true, BTC_AMOUNT, 10001);
-        market::place_limit_order_user<BTC, USDC, E0>(&admin, address_of(&admin), false, BTC_AMOUNT, 10000);
+        user::deposit_from_coinstore<BTC>(&admin, market_id, 0, BTC_AMOUNT);
+        user::deposit_from_coinstore<USDC>(&admin, market_id, 0, USDC_AMOUNT);
+        market::place_limit_order_user<BTC, USDC>(&admin, address_of(&admin), market_id, true, BTC_AMOUNT / lot_size, 10001 * (lot_size / tick_size), true, false, false);
+        market::place_limit_order_user<BTC, USDC>(&admin, address_of(&admin), market_id, false, BTC_AMOUNT / lot_size, 10000 * (lot_size / tick_size), true, false, false);
     }
 
     #[cmd(desc=b"Create BTC-USDC pool on econia and add liquidity")]
