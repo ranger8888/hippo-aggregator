@@ -14,8 +14,6 @@ module hippo_aggregator::aggregator {
     use aptos_std::type_info::{TypeInfo, type_of};
 
 
-    const MAX_SIZE: u64 = 9223372036854775808;
-
     const DEX_HIPPO: u8 = 1;
     const DEX_ECONIA: u8 = 2;
     const DEX_PONTEM: u8 = 3;
