@@ -17,6 +17,7 @@ module hippo_aggregator::aggregator {
     const DEX_HIPPO: u8 = 1;
     const DEX_ECONIA: u8 = 2;
     const DEX_PONTEM: u8 = 3;
+    const DEX_BASIQ: u8 = 4;
 
     const HIPPO_CONSTANT_PRODUCT:u8 = 1;
     const HIPPO_STABLE_CURVE:u8 = 2;
@@ -45,7 +46,6 @@ module hippo_aggregator::aggregator {
         time_stamp: u64
     }
 
-    #[cmd]
     public entry fun initialize(admin: &signer) {
         let admin_addr = signer::address_of(admin);
         assert!(admin_addr == @hippo_aggregator, E_NOT_ADMIN);
@@ -148,6 +148,10 @@ module hippo_aggregator::aggregator {
         else if (dex_type == DEX_PONTEM) {
             use pontem::router;
             (option::none(), router::swap_exact_coin_for_coin<X, Y, E>(@hippo_aggregator, x_in, 0))
+        }
+        else if (dex_type == DEX_BASIQ) {
+            use basiq::dex;
+            (option::none(), dex::swap<X, Y>(x_in))
         }
         else {
             abort E_UNKNOWN_DEX
