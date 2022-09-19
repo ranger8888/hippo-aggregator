@@ -4,8 +4,12 @@ module hippo_aggregator::volume_test {
     use hippo_aggregator::volume;
     use std::signer;
     use std::vector;
-    use hippo_aggregator::volume::{TradingPair, PoolProvider};
-    use coin_list::devnet_coins::{DevnetUSDC, DevnetBTC};
+    use std::string::String;
+    use std::string;
+    use aptos_std::type_info::type_of;
+    use aptos_framework::coin::Coin;
+    use coin_list::devnet_coins::{DevnetUSDC, DevnetUSDT};
+    use aptos_std::type_info;
 
     fun initialize(admin: &signer, poster: &signer){
         volume::initialize(admin, signer::address_of(poster))
@@ -28,8 +32,12 @@ module hippo_aggregator::volume_test {
         volume::set_poster(admin, signer::address_of(new_poster))
     }
     fun post(poster: &signer){
-        let top_trading_pair = vector::empty<TradingPair>();
-        vector::push_back(&mut top_trading_pair, volume::newTradingPair<DevnetUSDC, DevnetBTC>(10));
+        let coin_x = vector::empty<vector<u8>>();
+        let coin_y = vector::empty<vector<u8>>();
+        let amout = vector::empty<u64>();
+        vector::push_back(&mut coin_x, type_info::struct_name(&type_of<Coin<DevnetUSDC>>()));
+        vector::push_back(&mut coin_y, type_info::struct_name(&type_of<Coin<DevnetUSDT>>()));
+        vector::push_back(&mut amout, 100);
         volume::post(
             poster,
             100,
@@ -37,10 +45,16 @@ module hippo_aggregator::volume_test {
             10000,
             20000 + 60*60*1,
             100,
-            &top_trading_pair,
-            &top_trading_pair,
-            &vector::empty<PoolProvider>(),
-            &vector::empty<PoolProvider>()
+            coin_x,
+            coin_y,
+            amout,
+            vector::empty<vector<u8>>(),
+            vector::empty<vector<u8>>(),
+            vector::empty<u64>(),
+            vector::empty<u8>(),
+            vector::empty<u64>(),
+            vector::empty<u8>(),
+            vector::empty<u64>()
         );
         volume::post(
             poster,
@@ -49,10 +63,16 @@ module hippo_aggregator::volume_test {
             10000,
             20000 + 60*60*2,
             120,
-            &top_trading_pair,
-            &top_trading_pair,
-            &vector::empty<PoolProvider>(),
-            &vector::empty<PoolProvider>()
+            vector::empty<vector<u8>>(),
+            vector::empty<vector<u8>>(),
+            vector::empty<u64>(),
+            vector::empty<vector<u8>>(),
+            vector::empty<vector<u8>>(),
+            vector::empty<u64>(),
+            vector::empty<u8>(),
+            vector::empty<u64>(),
+            vector::empty<u8>(),
+            vector::empty<u64>()
         );
         volume::post(
             poster,
@@ -61,10 +81,16 @@ module hippo_aggregator::volume_test {
             10000,
             21000 + 60*60,
             140,
-            &top_trading_pair,
-            &top_trading_pair,
-            &vector::empty<PoolProvider>(),
-            &vector::empty<PoolProvider>()
+            vector::empty<vector<u8>>(),
+            vector::empty<vector<u8>>(),
+            vector::empty<u64>(),
+            vector::empty<vector<u8>>(),
+            vector::empty<vector<u8>>(),
+            vector::empty<u64>(),
+            vector::empty<u8>(),
+            vector::empty<u64>(),
+            vector::empty<u8>(),
+            vector::empty<u64>()
         )
     }
 
