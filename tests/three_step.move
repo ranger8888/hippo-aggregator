@@ -7,14 +7,16 @@ module hippo_aggregator::three_step {
     use aptos_framework::genesis;
 
     use hippo_swap::cp_scripts;
-    use econia::registry::{E1};
     use coin_list::devnet_coins;
     use coin_list::devnet_coins::{
         DevnetBTC as BTC,
         DevnetUSDC as USDC
     };
-    use hippo_aggregator::aggregator::{three_step_route, initialize};
+    use hippo_aggregator::aggregator::{three_step_route, init_module_test};
     use hippo_aggregator::econia::init_market_test;
+
+    #[test_only]
+    struct E1{}
 
     #[test_only]
     const DEX_HIPPO: u8 = 1;
@@ -59,26 +61,27 @@ module hippo_aggregator::three_step {
     ){
         genesis::setup();
         aptos_account::create_account(signer::address_of(aggregator));
-        initialize(aggregator);
+        init_module_test(aggregator);
         if (signer::address_of(hippo_swap) != signer::address_of(aggregator)) {
             aptos_account::create_account(signer::address_of(hippo_swap));
         };
         devnet_coins::deploy(coin_list);
         cp_scripts::mock_deploy_script(hippo_swap);
-        init_market_test<BTC, USDC, E1>(ASK, econia, aggregator, user_0, user_1, user_2, user_3);
-        let quote_coins_spent:u64 = 238;
+        init_market_test<BTC, USDC>(ASK, econia, aggregator, user_0, user_1, user_2, user_3);
+        let quote_coins_spent:u64 = 238000;
         devnet_coins::mint_to_wallet<USDC>(swap_user, quote_coins_spent);
         print(&coin::balance<USDC>(signer::address_of(swap_user)));
+        let market_id = 0;
         three_step_route<USDC, BTC, USDC, BTC, E1, E1, E1>(
             swap_user,
             DEX_ECONIA,
-            ECONIA_V1,
+            market_id,
             false,
             DEX_HIPPO,
-            HIPPO_CONSTANT_PRODUCT,
+            (HIPPO_CONSTANT_PRODUCT as u64),
             true,
             DEX_HIPPO,
-            HIPPO_CONSTANT_PRODUCT,
+            (HIPPO_CONSTANT_PRODUCT as u64),
             false,
             quote_coins_spent,
             0

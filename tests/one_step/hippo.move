@@ -6,8 +6,7 @@ module hippo_aggregator::hippo {
     use aptos_framework::coin;
     use aptos_framework::genesis;
 
-    use hippo_aggregator::aggregator::{one_step_route, initialize};
-    use econia::registry::E1;
+    use hippo_aggregator::aggregator::{one_step_route, init_module_test};
     use hippo_swap::cp_scripts;
 
     use coin_list::devnet_coins;
@@ -15,6 +14,9 @@ module hippo_aggregator::hippo {
         DevnetBTC as BTC,
         DevnetUSDC as USDC
     };
+
+    #[test_only]
+    struct E1{}
 
     #[test_only]
     const DEX_HIPPO: u8 = 1;
@@ -28,7 +30,7 @@ module hippo_aggregator::hippo {
     fun test_one_step_hippo(aggregator: &signer, hippo_swap: &signer, coin_list_admin: &signer, user: &signer){
         genesis::setup();
         aptos_account::create_account(signer::address_of(aggregator));
-        initialize(aggregator);
+        init_module_test(aggregator);
         if (signer::address_of(hippo_swap) != signer::address_of(aggregator)) {
             aptos_account::create_account(signer::address_of(hippo_swap));
         };
@@ -44,7 +46,7 @@ module hippo_aggregator::hippo {
         one_step_route<BTC, USDC, E1>(
             user,
             DEX_HIPPO,
-            HIPPO_CONSTANT_PRODUCT,
+            (HIPPO_CONSTANT_PRODUCT as u64),
             true,
             100,
             0

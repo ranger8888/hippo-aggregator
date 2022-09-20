@@ -53,6 +53,11 @@ module hippo_aggregator::aggregator {
         });
     }
 
+    #[test_only]
+    public fun init_module_test(admin: &signer) {
+        init_module(admin);
+    }
+
     fun emit_swap_step_event<Input, Output>(
         dex_type:u8,
         pool_type:u64,

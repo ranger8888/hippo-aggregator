@@ -4,8 +4,6 @@ module hippo_aggregator::volume_test {
     use hippo_aggregator::volume;
     use std::signer;
     use std::vector;
-    use std::string::String;
-    use std::string;
     use aptos_std::type_info::type_of;
     use aptos_framework::coin::Coin;
     use coin_list::devnet_coins::{DevnetUSDC, DevnetUSDT};

@@ -9,13 +9,16 @@ module hippo_aggregator::econia {
         DevnetBTC as BTC,
         DevnetUSDC as USDC
     };
-    use econia::registry::{E1, init_registry, set_registered_custodian, get_custodian_capability, destroy_custodian_capability};
-    use econia::user::{register_market_account, market_account_info, deposit_collateral};
-    use econia::market::{init_econia_capability_store, register_market, place_limit_order_custodian};
+    use econia::registry::{Self, init_registry, set_registered_custodian_test, get_custodian_capability_test, destroy_custodian_capability_test};
+    use econia::user::{register_market_account, deposit_coins};
+    use econia::market::{register_market_pure_coin, place_limit_order_custodian};
     use econia::order_id;
-    use hippo_aggregator::aggregator::{one_step_route, initialize};
+    use hippo_aggregator::aggregator::{one_step_route, init_module_test};
     use aptos_framework::aptos_account;
     // use aptos_framework::account;
+
+    #[test_only]
+    struct E1{}
 
     #[test_only]
     const DEX_HIPPO: u8 = 1;
@@ -118,31 +121,34 @@ module hippo_aggregator::econia {
     #[test_only]
     const USER_3_SERIAL_ID: u64 = 2;
 
+    #[test_only]
+    const LOT_SIZE: u64 = 100;
+    #[test_only]
+    const TICK_SIZE: u64 = 1000;
+
     // copy from econia/sources/market.move::init_funded_user
     #[test_only]
-    public fun init_funded_user<Coin0, Coin1, E>(
+    public fun init_funded_user<Coin0, Coin1>(
         user: &signer,
+        market_id: u64,
         custodian_id: u64,
         base_coins: u64,
         quote_coins: u64
     ) {
         // Set custodian ID as in bounds
-        set_registered_custodian(custodian_id);
+        set_registered_custodian_test(custodian_id);
         // Reguster user to trade on the market
-        register_market_account<Coin0, Coin1, E>(user, custodian_id);
-        // Get market account info
-        let market_account_info =
-            market_account_info<Coin0, Coin1, E>(custodian_id);
+        register_market_account<Coin0, Coin1>(user, market_id, custodian_id);
         // Deposit base coin collateral
-        deposit_collateral<Coin0>(address_of(user), market_account_info,
+        deposit_coins<Coin0>(address_of(user), market_id, custodian_id,
             devnet_coins::mint<Coin0>(base_coins));
         // Deposit quote coin collateral
-        deposit_collateral<Coin1>(address_of(user), market_account_info,
+        deposit_coins<Coin1>(address_of(user), market_id, custodian_id,
             devnet_coins::mint<Coin1>(quote_coins));
     }
     // copy from econia/sources/market.move::init_market_test
     #[test_only]
-    public fun init_market_test<Coin0, Coin1, E>(
+    public fun init_market_test<Coin0, Coin1>(
         side: bool,
         econia: &signer,
         host: &signer,
@@ -156,18 +162,21 @@ module hippo_aggregator::econia {
         u128
     ) {
         init_registry(econia); // Initialize registry
+        // Set all potential custodian IDs as valid
+        registry::set_registered_custodian_test(HI_64);
         // Initialize Econia capability store
-        init_econia_capability_store(econia);
+        // init_econia_capability_store(econia);
         // Register test market with Econia as host
-        register_market<Coin0, Coin1, E>(host);
+        register_market_pure_coin<Coin0, Coin1>(host, LOT_SIZE, TICK_SIZE);
+        let market_id = 0;
         // Initialize funded users
-        init_funded_user<Coin0, Coin1, E>(user_0, USER_0_CUSTODIAN_ID,
+        init_funded_user<Coin0, Coin1>(user_0, market_id, USER_0_CUSTODIAN_ID,
             USER_0_START_BASE, USER_0_START_QUOTE);
-        init_funded_user<Coin0, Coin1, E>(user_1, USER_1_CUSTODIAN_ID,
+        init_funded_user<Coin0, Coin1>(user_1, market_id, USER_1_CUSTODIAN_ID,
             USER_1_START_BASE, USER_1_START_QUOTE);
-        init_funded_user<Coin0, Coin1, E>(user_2, USER_2_CUSTODIAN_ID,
+        init_funded_user<Coin0, Coin1>(user_2, market_id, USER_2_CUSTODIAN_ID,
             USER_2_START_BASE, USER_2_START_QUOTE);
-        init_funded_user<Coin0, Coin1, E>(user_3, USER_3_CUSTODIAN_ID,
+        init_funded_user<Coin0, Coin1>(user_3, market_id, USER_3_CUSTODIAN_ID,
             USER_3_START_BASE, USER_3_START_QUOTE);
         // Define user order prices and sizes based on market side
         let user_1_order_price = if (side == ASK)
@@ -191,22 +200,25 @@ module hippo_aggregator::econia {
             USER_3_SERIAL_ID, side);
         // Get custodian capabilities
         let custodian_capability_1 =
-            get_custodian_capability(USER_1_CUSTODIAN_ID);
+            get_custodian_capability_test(USER_1_CUSTODIAN_ID);
         let custodian_capability_2 =
-            get_custodian_capability(USER_2_CUSTODIAN_ID);
+            get_custodian_capability_test(USER_2_CUSTODIAN_ID);
         let custodian_capability_3 =
-            get_custodian_capability(USER_3_CUSTODIAN_ID);
+            get_custodian_capability_test(USER_3_CUSTODIAN_ID);
         // Place limit orders for given side
-        place_limit_order_custodian<Coin0, Coin1, E>(address_of(user_1), address_of(host), side,
-            user_1_order_size, user_1_order_price, &custodian_capability_1);
-        place_limit_order_custodian<Coin0, Coin1, E>(address_of(user_2), address_of(host), side,
-            user_2_order_size, user_2_order_price, &custodian_capability_2);
-        place_limit_order_custodian<Coin0, Coin1, E>(address_of(user_3), address_of(host), side,
-            user_3_order_size, user_3_order_price, &custodian_capability_3);
+        let post_or_abort = true;
+        let fill_or_abort = false;
+        let immediate_or_cancel = false;
+        place_limit_order_custodian<Coin0, Coin1>(address_of(user_1), address_of(host), market_id, side,
+            user_1_order_size, user_1_order_price, post_or_abort, fill_or_abort, immediate_or_cancel, &custodian_capability_1);
+        place_limit_order_custodian<Coin0, Coin1>(address_of(user_2), address_of(host), market_id, side,
+            user_2_order_size, user_2_order_price, post_or_abort, fill_or_abort, immediate_or_cancel, &custodian_capability_2);
+        place_limit_order_custodian<Coin0, Coin1>(address_of(user_3), address_of(host), market_id, side,
+            user_3_order_size, user_3_order_price, post_or_abort, fill_or_abort, immediate_or_cancel, &custodian_capability_3);
         // Destroy custodian capabilities
-        destroy_custodian_capability(custodian_capability_1);
-        destroy_custodian_capability(custodian_capability_2);
-        destroy_custodian_capability(custodian_capability_3);
+        destroy_custodian_capability_test(custodian_capability_1);
+        destroy_custodian_capability_test(custodian_capability_2);
+        destroy_custodian_capability_test(custodian_capability_3);
         (order_id_1, order_id_2, order_id_3) // Return order IDs
     }
     #[test(
@@ -231,22 +243,24 @@ module hippo_aggregator::econia {
     ) {
         genesis::setup();
         aptos_account::create_account(address_of(aggregator));
-        initialize(aggregator);
+        init_module_test(aggregator);
         devnet_coins::deploy(coin_list_admin);
 
-        init_market_test<BTC, USDC, E1>(ASK, econia_admin, aggregator, user_0, user_1, user_2, user_3);
+        init_market_test<BTC, USDC>(ASK, econia_admin, aggregator, user_0, user_1, user_2, user_3);
         let user_3_fill_size = USER_3_ASK_SIZE - 2;
         let quote_coins_spent = // Calculate quote coins spent
-            (USER_1_ASK_SIZE * USER_1_ASK_PRICE) +
+            ((USER_1_ASK_SIZE * USER_1_ASK_PRICE) +
                 (USER_2_ASK_SIZE * USER_2_ASK_PRICE) +
-                (user_3_fill_size * USER_3_ASK_PRICE);
+                (user_3_fill_size * USER_3_ASK_PRICE)) * TICK_SIZE;
         print(&quote_coins_spent);
         devnet_coins::mint_to_wallet<USDC>(swap_user, quote_coins_spent);
         // Place a swap
+        let market_id = 0;
+
         one_step_route<USDC, BTC, E1>(
             swap_user,
             DEX_ECONIA,
-            ECONIA_V1,
+            market_id,
             false,
             quote_coins_spent,
             0
