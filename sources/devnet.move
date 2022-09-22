@@ -49,7 +49,7 @@ module hippo_aggregator::devnet {
             USDC_AMOUNT / BTC_AMOUNT * 1000000,
             1 * 1000000,
             utf8(b"BTC-USDC LP"),
-            utf8(b"BTC-USDC-LP"),
+            utf8(b"BTC-USDC"),
             true,
         );
         dex::add_liquidity_entry<BTC, USDC>(admin, BTC_AMOUNT, USDC_AMOUNT);
