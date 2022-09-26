@@ -12,8 +12,6 @@ module hippo_aggregator::volume {
     const E_VERCTOR_LENGT_NOT_EQUAL: u64 = 4;
 
     const VOLUME_HISTORY_LENGTH: u64 = 30;
-    const PERIOD_LENGTH_24H: u64 = 24 * 60 * 60;
-    const PERIOD_LENGTH_7D: u64 = 7 * 24 * 60 * 60;
     struct TotalVolume has drop, store, copy{
         start_time: u64,
         end_time: u64,
