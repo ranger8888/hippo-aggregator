@@ -1,0 +1,11 @@
+[package]
+name = "ditto"
+version = "0.0.0"
+
+[dependencies]
+AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework/", rev = "7f967d7d8d230dcf10bd3a8d25d5d3ed9f96b8f4" }
+
+[addresses]
+tortuga = "12d75d5bde2535789041cd380e832038da873a4ba86348ca891d374e1d0e15ab"
+
+
