@@ -9,8 +9,8 @@ CoinList = { git = "https://github.com/hippospace/aptos-coin-list.git", subdir =
 Liquidswap = { local = "./interface/pontem-Liquidswap" }
 LiquidswapLP = { local = "./interface/pontem-LiquidswapLP" }
 basiq = { local = "./interface/basiq-basiq" }
-ditto = { local = "./interface/ditto-research" }
-tortuga = { local = "./interface/tortuga" }
+ditto-staking = { local = "./interface/ditto-research" }
+tortuga-stub = { local = "./interface/tortuga" }
 
 [addresses]
 hippo_aggregator = "dad1c1d54fcff3bf0d83b4b0067d7cf0ebdca3ff17556f77115ada2db1ff23fe"

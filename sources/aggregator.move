@@ -63,7 +63,7 @@ module hippo_aggregator::aggregator {
             swap_step_events: account::new_event_handle<SwapStepEvent>(admin)
         });
     }
-    entry fun init_coin_store<X>(admin: &signer) {
+    public entry fun init_coin_store<X>(admin: &signer) {
         move_to(admin, CoinStore<X>{
             balance: coin::zero<X>()
         });

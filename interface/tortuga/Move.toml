@@ -1,5 +1,5 @@
 [package]
-name = "tortuga"
+name = "tortuga-stub"
 version = "0.0.0"
 
 [dependencies]
