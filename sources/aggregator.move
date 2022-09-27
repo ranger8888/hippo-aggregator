@@ -13,6 +13,8 @@ module hippo_aggregator::aggregator {
     use aptos_std::event;
     use aptos_std::type_info::{TypeInfo, type_of};
     use aptos_framework::aptos_coin::AptosCoin;
+    use ditto::staked_coin;
+    use tortuga::staked_aptos_coin;
 
     const HI_64: u64 = 0xffffffffffffffff;
 
@@ -59,16 +61,25 @@ module hippo_aggregator::aggregator {
     entry fun init_module(admin: &signer) {
         let admin_addr = signer::address_of(admin);
         assert!(admin_addr == @hippo_aggregator, E_NOT_ADMIN);
+        init_coin_store_all(admin);
         move_to(admin, EventStore {
             swap_step_events: account::new_event_handle<SwapStepEvent>(admin)
         });
     }
+    #[cmd]
     public entry fun init_coin_store<X>(admin: &signer) {
+        let admin_addr = signer::address_of(admin);
+        assert!(admin_addr == @hippo_aggregator, E_NOT_ADMIN);
         move_to(admin, CoinStore<X>{
             balance: coin::zero<X>()
         });
     }
-
+    #[cmd]
+    public entry fun init_coin_store_all(admin: &signer){
+        init_coin_store<AptosCoin>(admin);
+        init_coin_store<staked_coin::StakedAptos>(admin);
+        init_coin_store<staked_aptos_coin::StakedAptosCoin>(admin);
+    }
     #[test_only]
     public fun init_module_test(admin: &signer) {
         init_module(admin);
