@@ -5,6 +5,7 @@ module hippo_aggregator::econia {
     use aptos_framework::genesis;
     use aptos_framework::coin;
     use coin_list::devnet_coins;
+    use coin_list::coin_list;
     use coin_list::devnet_coins::{
         DevnetBTC as BTC,
         DevnetUSDC as USDC
@@ -244,6 +245,7 @@ module hippo_aggregator::econia {
         genesis::setup();
         aptos_account::create_account(address_of(aggregator));
         init_module_test(aggregator);
+        coin_list::initialize(coin_list_admin);
         devnet_coins::deploy(coin_list_admin);
 
         init_market_test<BTC, USDC>(ASK, econia_admin, aggregator, user_0, user_1, user_2, user_3);

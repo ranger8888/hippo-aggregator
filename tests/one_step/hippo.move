@@ -10,6 +10,7 @@ module hippo_aggregator::hippo {
     use hippo_swap::cp_scripts;
 
     use coin_list::devnet_coins;
+    use coin_list::coin_list;
     use coin_list::devnet_coins::{
         DevnetBTC as BTC,
         DevnetUSDC as USDC
@@ -34,6 +35,8 @@ module hippo_aggregator::hippo {
         if (signer::address_of(hippo_swap) != signer::address_of(aggregator)) {
             aptos_account::create_account(signer::address_of(hippo_swap));
         };
+
+        coin_list::initialize(coin_list_admin);
         devnet_coins::deploy(coin_list_admin);
         // hippo-swap cp swap pool
         // btc-usdt btc-usdc
