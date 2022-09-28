@@ -12,6 +12,9 @@ module hippo_aggregator::aggregator {
     use aptos_framework::timestamp;
     use aptos_std::event;
     use aptos_std::type_info::{TypeInfo, type_of};
+    use aptos_framework::aptos_coin::AptosCoin;
+    use ditto::staked_coin;
+    use tortuga::staked_aptos_coin;
 
     const HI_64: u64 = 0xffffffffffffffff;
 
@@ -19,6 +22,8 @@ module hippo_aggregator::aggregator {
     const DEX_ECONIA: u8 = 2;
     const DEX_PONTEM: u8 = 3;
     const DEX_BASIQ: u8 = 4;
+    const DEX_DITTO: u8 = 5;
+    const DEX_TORTUGA: u8 = 6;
 
     const HIPPO_CONSTANT_PRODUCT:u64 = 1;
     const HIPPO_STABLE_CURVE:u64 = 2;
@@ -28,9 +33,17 @@ module hippo_aggregator::aggregator {
     const E_OUTPUT_LESS_THAN_MINIMUM: u64 = 2;
     const E_UNKNOWN_DEX: u64 = 3;
     const E_NOT_ADMIN: u64 = 4;
+    const E_INVALID_PAIR_OF_DITTO: u64 = 5;
+    const E_INVALID_PAIR_OF_TORTUGA: u64 = 6;
+    const E_TYPE_NOT_EQUAL: u64 = 7;
+    const E_COIN_STORE_NOT_EXITES: u64 = 8;
 
     struct EventStore has key {
         swap_step_events: EventHandle<SwapStepEvent>,
+    }
+
+    struct CoinStore<phantom CoinType> has key {
+        balance: coin::Coin<CoinType>
     }
 
     struct SwapStepEvent has drop, store {
@@ -48,9 +61,26 @@ module hippo_aggregator::aggregator {
     entry fun init_module(admin: &signer) {
         let admin_addr = signer::address_of(admin);
         assert!(admin_addr == @hippo_aggregator, E_NOT_ADMIN);
+        init_coin_store_all(admin);
         move_to(admin, EventStore {
             swap_step_events: account::new_event_handle<SwapStepEvent>(admin)
         });
+    }
+
+    #[cmd]
+    public entry fun init_coin_store<X>(admin: &signer) {
+        let admin_addr = signer::address_of(admin);
+        assert!(admin_addr == @hippo_aggregator, E_NOT_ADMIN);
+        move_to(admin, CoinStore<X>{
+            balance: coin::zero<X>()
+        });
+    }
+
+    #[cmd]
+    public entry fun init_coin_store_all(admin: &signer){
+        init_coin_store<AptosCoin>(admin);
+        init_coin_store<staked_coin::StakedAptos>(admin);
+        init_coin_store<staked_aptos_coin::StakedAptosCoin>(admin);
     }
 
     #[test_only]
@@ -79,12 +109,30 @@ module hippo_aggregator::aggregator {
         );
     }
 
+    fun change_coin_type<X, Y>(x_coin: coin::Coin<X>): coin::Coin<Y> acquires CoinStore {
+        assert!(type_of<X>() == type_of<Y>(), E_TYPE_NOT_EQUAL);
+        assert!(exists<CoinStore<X>>(@hippo_aggregator), 0);
+        let amount = coin::value(&x_coin);
+        let x_coin_store = borrow_global_mut<CoinStore<X>>(@hippo_aggregator);
+        coin::merge(&mut x_coin_store.balance, x_coin);
+
+        let y_coin_store = borrow_global_mut<CoinStore<Y>>(@hippo_aggregator);
+        coin::extract(&mut y_coin_store.balance, amount)
+    }
+
+    #[test(admin = @hippo_aggregator)]
+    fun test_change_coin_type(admin: &signer) acquires CoinStore {
+        init_coin_store_all(admin);
+        let coin = change_coin_type<AptosCoin, AptosCoin>(coin::zero<AptosCoin>());
+        coin::destroy_zero(coin)
+    }
+
     public fun get_intermediate_output<X, Y, E>(
         dex_type: u8,
         pool_type: u64,
         is_x_to_y: bool,
         x_in: coin::Coin<X>
-    ): (Option<coin::Coin<X>>, coin::Coin<Y>) acquires EventStore {
+    ): (Option<coin::Coin<X>>, coin::Coin<Y>) acquires EventStore, CoinStore {
         let coin_in_value = coin::value(&x_in);
         let (x_out_opt, y_out) = if (dex_type == DEX_HIPPO) {
             if (pool_type == HIPPO_CONSTANT_PRODUCT) {
@@ -156,6 +204,50 @@ module hippo_aggregator::aggregator {
             use basiq::dex;
             (option::none(), dex::swap<X, Y>(x_in))
         }
+        else if (dex_type == DEX_DITTO) {
+            use ditto::ditto_staking;
+            if (type_of<X>() == type_of<AptosCoin>() && type_of<Y>() == type_of<staked_coin::StakedAptos>()){
+                (
+                    option::none(),
+                    change_coin_type<staked_coin::StakedAptos, Y>(
+                        ditto_staking::exchange_aptos(
+                            change_coin_type<X, AptosCoin>(x_in)
+                        )
+                    )
+                )
+            }
+            else if (type_of<X>() == type_of<staked_coin::StakedAptos>() && type_of<Y>() == type_of<AptosCoin>()){
+                (
+                    option::none(),
+                    change_coin_type<AptosCoin, Y>(
+                        ditto_staking::exchange_staptos(
+                            change_coin_type<X, staked_coin::StakedAptos>(x_in)
+                        )
+                    ))
+            }
+            else {
+                abort E_INVALID_PAIR_OF_DITTO
+            }
+        }
+        else if (dex_type == DEX_TORTUGA){
+            use tortuga::stake_router;
+            if (
+                type_of<X>() == type_of<AptosCoin>() &&
+                    type_of<Y>() == type_of<staked_aptos_coin::StakedAptosCoin>()){
+                (
+                    option::none(),
+                    change_coin_type<
+                        staked_aptos_coin::StakedAptosCoin, Y>(
+                        stake_router::stake_coins(
+                            change_coin_type<X,AptosCoin>(x_in)
+                        )
+                    )
+                )
+            }
+            else {
+                abort E_INVALID_PAIR_OF_TORTUGA
+            }
+        }
         else {
             abort E_UNKNOWN_DEX
         };
@@ -199,7 +291,7 @@ module hippo_aggregator::aggregator {
         pool_type: u64,
         is_x_to_y: bool,
         x_in: coin::Coin<X>
-    ):(Option<coin::Coin<X>>, coin::Coin<Y>) acquires EventStore {
+    ):(Option<coin::Coin<X>>, coin::Coin<Y>) acquires EventStore, CoinStore {
         get_intermediate_output<X, Y, E>(dex_type, pool_type, is_x_to_y, x_in)
     }
 
@@ -211,7 +303,7 @@ module hippo_aggregator::aggregator {
         first_is_x_to_y: bool, // first trade uses normal order
         x_in: u64,
         y_min_out: u64,
-    ) acquires EventStore {
+    ) acquires EventStore, CoinStore {
         let coin_in = coin::withdraw<X>(sender, x_in);
         let (coin_remain_opt, coin_out) = one_step_direct<X, Y, E>(first_dex_type, first_pool_type, first_is_x_to_y, coin_in);
         assert!(coin::value(&coin_out) >= y_min_out, E_OUTPUT_LESS_THAN_MINIMUM);
@@ -229,7 +321,7 @@ module hippo_aggregator::aggregator {
       second_pool_type: u64,
       second_is_x_to_y: bool, // second trade uses normal order
       x_in: coin::Coin<X>
-    ):(Option<coin::Coin<X>>, Option<coin::Coin<Y>>, coin::Coin<Z>) acquires EventStore {
+    ):(Option<coin::Coin<X>>, Option<coin::Coin<Y>>, coin::Coin<Z>) acquires EventStore, CoinStore {
         let (coin_x_remain, coin_y) = get_intermediate_output<X, Y, E1>(first_dex_type, first_pool_type, first_is_x_to_y, x_in);
         let (coin_y_remain, coin_z) = get_intermediate_output<Y, Z, E2>(second_dex_type, second_pool_type, second_is_x_to_y, coin_y);
         (coin_x_remain, coin_y_remain, coin_z)
@@ -248,7 +340,7 @@ module hippo_aggregator::aggregator {
         second_is_x_to_y: bool, // second trade uses normal order
         x_in: u64,
         z_min_out: u64,
-    ) acquires EventStore {
+    ) acquires EventStore, CoinStore {
         let coin_x = coin::withdraw<X>(sender, x_in);
         let (
             coin_x_remain,
@@ -282,7 +374,7 @@ module hippo_aggregator::aggregator {
         third_pool_type: u64,
         third_is_x_to_y: bool, // second trade uses normal order
         x_in: coin::Coin<X>
-    ):(Option<coin::Coin<X>>, Option<coin::Coin<Y>>, Option<coin::Coin<Z>>, coin::Coin<M>) acquires EventStore {
+    ):(Option<coin::Coin<X>>, Option<coin::Coin<Y>>, Option<coin::Coin<Z>>, coin::Coin<M>) acquires EventStore, CoinStore {
         let (coin_x_remain, coin_y) = get_intermediate_output<X, Y, E1>(first_dex_type, first_pool_type, first_is_x_to_y, x_in);
         let (coin_y_remain, coin_z) = get_intermediate_output<Y, Z, E2>(second_dex_type, second_pool_type, second_is_x_to_y, coin_y);
         let (coin_z_remain, coin_m) = get_intermediate_output<Z, M, E3>(third_dex_type, third_pool_type, third_is_x_to_y, coin_z);
@@ -305,7 +397,7 @@ module hippo_aggregator::aggregator {
         third_is_x_to_y: bool, // second trade uses normal order
         x_in: u64,
         m_min_out: u64,
-    ) acquires EventStore {
+    ) acquires EventStore, CoinStore {
         let coin_x = coin::withdraw<X>(sender, x_in);
         let (
             coin_x_remain,
@@ -330,4 +422,6 @@ module hippo_aggregator::aggregator {
         check_and_deposit_opt(sender, coin_z_remain);
         check_and_deposit(sender, coin_m);
     }
+
+
 }

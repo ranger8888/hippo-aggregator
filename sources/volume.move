@@ -93,7 +93,7 @@ module hippo_aggregator::volume {
         let volume = borrow_global_mut<Volume>(@hippo_aggregator);
         assert!(signer::address_of(poster) == volume.poster, E_NOT_POSTER);
         assert!(new_data_end_time != volume.data_end_time, E_REPEAT_POST);
-        assert!(new_data_end_seauence_number != volume.data_end_sequence_number, E_REPEAT_POST);
+        assert!(volume.data_end_sequence_number == 0 || new_data_end_seauence_number != volume.data_end_sequence_number, E_REPEAT_POST);
         assert!(vector::length(&trading_pairs_24h_coin_x) == vector::length(&trading_pairs_24h_coin_y), E_VERCTOR_LENGT_NOT_EQUAL);
         assert!(vector::length(&trading_pairs_24h_coin_x) == vector::length(&trading_pairs_24h_amount), E_VERCTOR_LENGT_NOT_EQUAL);
         assert!(vector::length(&trading_pairs_7d_coin_x) == vector::length(&trading_pairs_7d_coin_y), E_VERCTOR_LENGT_NOT_EQUAL);

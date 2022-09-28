@@ -54,4 +54,10 @@ module hippo_aggregator::devnet {
         );
         dex::add_liquidity_entry<BTC, USDC>(admin, BTC_AMOUNT, USDC_AMOUNT);
     }
+
+    public entry fun registe_coins(hippo_swap: &signer, coin_list: &signer, deploy_coin_list:bool){
+        let _hippo_swap = hippo_swap;
+        let _coin_list = coin_list;
+        let _deploy_coin_list = deploy_coin_list;
+    }
 }
