@@ -14,7 +14,6 @@ module hippo_aggregator::volume {
     const VOLUME_HISTORY_LENGTH: u64 = 30;
     struct TotalVolume has drop, store, copy{
         start_time: u64,
-        end_time: u64,
         amount: u64
     }
 
@@ -31,6 +30,8 @@ module hippo_aggregator::volume {
     struct Volume has key, copy{
         poster: address,
         total_volume: u128,
+        last_24h_volume: u64,
+        last_7d_volume: u64,
         // sequence number of data end
         data_end_sequence_number: u64,
         // time of data end
@@ -52,6 +53,8 @@ module hippo_aggregator::volume {
         move_to(admin, Volume{
             poster,
             total_volume: 0,
+            last_24h_volume: 0,
+            last_7d_volume: 0,
             data_end_sequence_number: 0,
             data_end_time: 0,
             volume_decimals: 4,
@@ -75,6 +78,8 @@ module hippo_aggregator::volume {
     public entry fun post(
         poster: &signer,
         amount: u64,
+        last_24_volume: u64,
+        last_7d_volume: u64,
         round_start_time_24h: u64,
         round_start_time_7d: u64,
         new_data_end_time: u64,
@@ -92,7 +97,6 @@ module hippo_aggregator::volume {
     ) acquires Volume {
         let volume = borrow_global_mut<Volume>(@hippo_aggregator);
         assert!(signer::address_of(poster) == volume.poster, E_NOT_POSTER);
-        assert!(new_data_end_time != volume.data_end_time, E_REPEAT_POST);
         assert!(volume.data_end_sequence_number == 0 || new_data_end_seauence_number != volume.data_end_sequence_number, E_REPEAT_POST);
         assert!(vector::length(&trading_pairs_24h_coin_x) == vector::length(&trading_pairs_24h_coin_y), E_VERCTOR_LENGT_NOT_EQUAL);
         assert!(vector::length(&trading_pairs_24h_coin_x) == vector::length(&trading_pairs_24h_amount), E_VERCTOR_LENGT_NOT_EQUAL);
@@ -101,11 +105,13 @@ module hippo_aggregator::volume {
         assert!(vector::length(&pool_provider_24h_dex_type) == vector::length(&pool_provider_24h_amount), E_VERCTOR_LENGT_NOT_EQUAL);
         assert!(vector::length(&pool_provider_7d_dex_type) == vector::length(&pool_provider_7d_amount), E_VERCTOR_LENGT_NOT_EQUAL);
 
+        volume.last_24h_volume = last_24_volume;
+        volume.last_7d_volume = last_7d_volume;
         volume.data_end_time = new_data_end_time;
         volume.data_end_sequence_number = new_data_end_seauence_number;
         volume.total_volume = volume.total_volume + (amount as u128);
-        add_volume(&mut volume.total_volume_history_24h, round_start_time_24h, new_data_end_time, amount);
-        add_volume(&mut volume.total_volume_history_7d, round_start_time_7d, new_data_end_time, amount);
+        add_volume(&mut volume.total_volume_history_24h, round_start_time_24h, amount);
+        add_volume(&mut volume.total_volume_history_7d, round_start_time_7d, amount);
 
         volume.top_trading_pairs_24h = parse_trading_pairs_vector(&trading_pairs_24h_coin_x, &trading_pairs_24h_coin_y, &trading_pairs_24h_amount);
         volume.top_trading_pairs_7d = parse_trading_pairs_vector(&trading_pairs_7d_coin_x, &trading_pairs_7d_coin_y, &trading_pairs_7d_amount);
@@ -159,12 +165,11 @@ module hippo_aggregator::volume {
         };
         pool_provider
     }
-    fun add_volume(total_volume_array: &mut vector<TotalVolume>, round_start_time: u64, data_end_time: u64, amount: u64){
+    fun add_volume(total_volume_array: &mut vector<TotalVolume>, round_start_time: u64, amount: u64){
         let array_length = vector::length(total_volume_array);
         if (array_length == 0){
             vector::push_back(total_volume_array,TotalVolume{
                 start_time: round_start_time,
-                end_time: data_end_time,
                 amount
             });
             return
@@ -175,7 +180,6 @@ module hippo_aggregator::volume {
         } else {
             vector::push_back(total_volume_array,TotalVolume{
                 start_time: round_start_time,
-                end_time: data_end_time,
                 amount
             })
         };
