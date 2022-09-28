@@ -206,7 +206,6 @@ module hippo_aggregator::aggregator {
         }
         else if (dex_type == DEX_DITTO) {
             use ditto::ditto_staking;
-            use ditto::staked_coin;
             if (type_of<X>() == type_of<AptosCoin>() && type_of<Y>() == type_of<staked_coin::StakedAptos>()){
                 (
                     option::none(),
@@ -232,7 +231,6 @@ module hippo_aggregator::aggregator {
         }
         else if (dex_type == DEX_TORTUGA){
             use tortuga::stake_router;
-            use tortuga::staked_aptos_coin;
             if (
                 type_of<X>() == type_of<AptosCoin>() &&
                     type_of<Y>() == type_of<staked_aptos_coin::StakedAptosCoin>()){

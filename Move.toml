@@ -13,6 +13,6 @@ ditto-staking = { local = "./interface/ditto-research" }
 tortuga-stub = { local = "./interface/tortuga" }
 
 [addresses]
-hippo_aggregator = "dad1c1d54fcff3bf0d83b4b0067d7cf0ebdca3ff17556f77115ada2db1ff23fe"
+hippo_aggregator = "dbd92bb499c3476815e3a3e83cc21d34f1970d86b190ea65bd19f5fb7a4ca9f7"
 poster = "0x02"
 poster_2 = "0x03"
