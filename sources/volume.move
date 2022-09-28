@@ -12,8 +12,6 @@ module hippo_aggregator::volume {
     const E_VERCTOR_LENGT_NOT_EQUAL: u64 = 4;
 
     const VOLUME_HISTORY_LENGTH: u64 = 30;
-    const PERIOD_LENGTH_24H: u64 = 24 * 60 * 60;
-    const PERIOD_LENGTH_7D: u64 = 7 * 24 * 60 * 60;
     struct TotalVolume has drop, store, copy{
         start_time: u64,
         end_time: u64,
@@ -32,6 +30,7 @@ module hippo_aggregator::volume {
     }
     struct Volume has key, copy{
         poster: address,
+        total_volume: u128,
         // sequence number of data end
         data_end_sequence_number: u64,
         // time of data end
@@ -52,6 +51,7 @@ module hippo_aggregator::volume {
         assert!(admin_addr == @hippo_aggregator, E_NOT_ADMIN);
         move_to(admin, Volume{
             poster,
+            total_volume: 0,
             data_end_sequence_number: 0,
             data_end_time: 0,
             volume_decimals: 4,
@@ -103,7 +103,7 @@ module hippo_aggregator::volume {
 
         volume.data_end_time = new_data_end_time;
         volume.data_end_sequence_number = new_data_end_seauence_number;
-
+        volume.total_volume = volume.total_volume + (amount as u128);
         add_volume(&mut volume.total_volume_history_24h, round_start_time_24h, new_data_end_time, amount);
         add_volume(&mut volume.total_volume_history_7d, round_start_time_7d, new_data_end_time, amount);
 
@@ -116,6 +116,7 @@ module hippo_aggregator::volume {
     public entry fun clean(poster: &signer) acquires Volume{
         let volume = borrow_global_mut<Volume>(@hippo_aggregator);
         assert!(signer::address_of(poster) == volume.poster, E_NOT_POSTER);
+        volume.total_volume = 0;
         volume.data_end_sequence_number = 0;
         volume.data_end_time = 0;
         volume.total_volume_history_24h = vector::empty();
