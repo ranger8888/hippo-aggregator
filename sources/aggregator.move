@@ -66,6 +66,7 @@ module hippo_aggregator::aggregator {
             swap_step_events: account::new_event_handle<SwapStepEvent>(admin)
         });
     }
+
     #[cmd]
     public entry fun init_coin_store<X>(admin: &signer) {
         let admin_addr = signer::address_of(admin);
@@ -74,12 +75,14 @@ module hippo_aggregator::aggregator {
             balance: coin::zero<X>()
         });
     }
+
     #[cmd]
     public entry fun init_coin_store_all(admin: &signer){
         init_coin_store<AptosCoin>(admin);
         init_coin_store<staked_coin::StakedAptos>(admin);
         init_coin_store<staked_aptos_coin::StakedAptosCoin>(admin);
     }
+
     #[test_only]
     public fun init_module_test(admin: &signer) {
         init_module(admin);
@@ -105,6 +108,7 @@ module hippo_aggregator::aggregator {
             },
         );
     }
+
     fun change_coin_type<X, Y>(x_coin: coin::Coin<X>): coin::Coin<Y> acquires CoinStore {
         assert!(type_of<X>() == type_of<Y>(), E_TYPE_NOT_EQUAL);
         assert!(exists<CoinStore<X>>(@hippo_aggregator), 0);
@@ -115,6 +119,14 @@ module hippo_aggregator::aggregator {
         let y_coin_store = borrow_global_mut<CoinStore<Y>>(@hippo_aggregator);
         coin::extract(&mut y_coin_store.balance, amount)
     }
+
+    #[test(admin = @hippo_aggregator)]
+    fun test_change_coin_type(admin: &signer) acquires CoinStore {
+        init_coin_store_all(admin);
+        let coin = change_coin_type<AptosCoin, AptosCoin>(coin::zero<AptosCoin>());
+        coin::destroy_zero(coin)
+    }
+
     public fun get_intermediate_output<X, Y, E>(
         dex_type: u8,
         pool_type: u64,
@@ -412,4 +424,6 @@ module hippo_aggregator::aggregator {
         check_and_deposit_opt(sender, coin_z_remain);
         check_and_deposit(sender, coin_m);
     }
+
+
 }
