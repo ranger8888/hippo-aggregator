@@ -3,7 +3,7 @@ name = "LiquidswapLP"
 version = "0.0.0"
 
 [dependencies]
-AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework/", rev = "7f967d7d8d230dcf10bd3a8d25d5d3ed9f96b8f4" }
+AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework/", rev = "afa8e736ab33aadf1053354fafa9c1a7fdd18e6b" }
 
 [addresses]
 pontem = "0x43417434fd869edee76cca2a4d2301e528a1551b1d719b75c350c3c97d15b8b9"

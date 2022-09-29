@@ -39,6 +39,8 @@ module hippo_aggregator::volume_test {
         volume::post(
             poster,
             100,
+            2000,
+            2000,
             20000,
             10000,
             20000 + 60*60*1,
@@ -57,6 +59,8 @@ module hippo_aggregator::volume_test {
         volume::post(
             poster,
             120,
+            2000,
+            2000,
             20000,
             10000,
             20000 + 60*60*2,
@@ -75,6 +79,8 @@ module hippo_aggregator::volume_test {
         volume::post(
             poster,
             150,
+            2000,
+            2000,
             21000,
             10000,
             21000 + 60*60,
