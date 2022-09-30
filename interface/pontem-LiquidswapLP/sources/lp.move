@@ -1,6 +1,6 @@
 module pontem::lp {
 
-    struct LP<phantom X, phantom Y> {
+    struct LP<phantom T0, phantom T1, phantom T2> {
         dummy_field: bool,
     }
 }

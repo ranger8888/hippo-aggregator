@@ -15,7 +15,7 @@ module hippo_aggregator::devnet {
         mint_to_wallet<USDC>(&admin, USDC_AMOUNT);
         scripts::register_pool_and_add_liquidity<BTC, USDC, PontemLP<BTC, USDC>>(
             &admin,
-            2, // uncorrelated,
+            // 2, // uncorrelated,
             BTC_AMOUNT,
             0,
             USDC_AMOUNT,
