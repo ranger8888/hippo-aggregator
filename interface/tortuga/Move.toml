@@ -3,7 +3,7 @@ name = "tortuga-stub"
 version = "0.0.0"
 
 [dependencies]
-AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework/", rev = "afa8e736ab33aadf1053354fafa9c1a7fdd18e6b" }
+AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework/", rev = "827e1c63739bbf06dad94f503a325e08b0daeb97" }
 
 [addresses]
 tortuga = "0x12d75d5bde2535789041cd380e832038da873a4ba86348ca891d374e1d0e15ab"
