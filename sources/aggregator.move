@@ -197,7 +197,7 @@ module hippo_aggregator::aggregator {
             }
         }
         else if (dex_type == DEX_PONTEM) {
-            use pontem::router;
+            use Liquidswap::router;
             (option::none(), router::swap_exact_coin_for_coin<X, Y, E>(x_in, 0))
         }
         else if (dex_type == DEX_BASIQ) {
