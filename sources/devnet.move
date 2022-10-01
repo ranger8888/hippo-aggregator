@@ -10,11 +10,12 @@ module hippo_aggregator::devnet {
 
     #[cmd(desc=b"Create BTC-USDC pool on pontem and add liquidity")]
     public entry fun mock_deploy_pontem(admin: signer) {
-        use Liquidswap::scripts;
-        use Liquidswap::curves;
+        use liquidswap::scripts;
+        use liquidswap::curves;
+        // BTC-USDC pair
         mint_to_wallet<BTC>(&admin, BTC_AMOUNT);
         mint_to_wallet<USDC>(&admin, USDC_AMOUNT);
-        scripts::register_pool_and_add_liquidity<BTC, USDC, PontemLP2<BTC, USDC, curves::Uncorrelated>>(
+        scripts::register_pool_and_add_liquidity<BTC, USDC, curves::Uncorrelated>(
             &admin,
             BTC_AMOUNT,
             BTC_AMOUNT,

@@ -37,7 +37,6 @@ module hippo_aggregator::hippo {
         };
 
         coin_list::initialize(coin_list_admin);
-        devnet_coins::deploy(coin_list_admin);
         // hippo-swap cp swap pool
         // btc-usdt btc-usdc
         cp_scripts::mock_deploy_script(hippo_swap);

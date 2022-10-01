@@ -5,7 +5,6 @@ module hippo_aggregator::aggregator {
     use std::option;
     use std::option::{Option, is_some, borrow};
     use hippo_swap::cp_swap;
-    use hippo_swap::stable_curve_swap;
     use hippo_swap::piece_swap;
     use econia::market;
     use aptos_std::event::EventHandle;
@@ -26,7 +25,6 @@ module hippo_aggregator::aggregator {
     const DEX_TORTUGA: u8 = 6;
 
     const HIPPO_CONSTANT_PRODUCT:u64 = 1;
-    const HIPPO_STABLE_CURVE:u64 = 2;
     const HIPPO_PIECEWISE:u64 = 3;
 
     const E_UNKNOWN_POOL_TYPE: u64 = 1;
@@ -147,20 +145,6 @@ module hippo_aggregator::aggregator {
                     (option::none(), y_out)
                 }
             }
-            else if (pool_type == HIPPO_STABLE_CURVE) {
-                if (is_x_to_y) {
-                    let (zero, zero2, y_out) = stable_curve_swap::swap_x_to_exact_y_direct<X, Y>(x_in);
-                    coin::destroy_zero(zero);
-                    coin::destroy_zero(zero2);
-                    (option::none(), y_out)
-                }
-                else {
-                    let (zero, y_out, zero2) = stable_curve_swap::swap_y_to_exact_x_direct<Y, X>(x_in);
-                    coin::destroy_zero(zero);
-                    coin::destroy_zero(zero2);
-                    (option::none(), y_out)
-                }
-            }
             else if (pool_type == HIPPO_PIECEWISE) {
                 if (is_x_to_y) {
                     let y_out = piece_swap::swap_x_to_y_direct<X, Y>(x_in);
@@ -197,7 +181,7 @@ module hippo_aggregator::aggregator {
             }
         }
         else if (dex_type == DEX_PONTEM) {
-            use Liquidswap::router;
+            use liquidswap::router;
             (option::none(), router::swap_exact_coin_for_coin<X, Y, E>(x_in, 0))
         }
         else if (dex_type == DEX_BASIQ) {

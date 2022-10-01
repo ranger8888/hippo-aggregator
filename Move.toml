@@ -4,12 +4,10 @@ version = "0.0.0"
 
 [dependencies]
 Econia = { git = "https://github.com/manahip/econia.git", subdir = "src/move/econia", rev = "4eeb9e3fa7a8f5985b7d0e71ddf875d9a6f2b690" }
-hippo-swap = { git = "https://github.com/hippospace/hippo-swap.git", rev = "96d67b8c72a04b16bbccf8a1f868ef6b4e1e9a06" }
-CoinList = { git = "https://github.com/hippospace/aptos-coin-list.git", subdir = "", rev = "8a0d2f27d4d567b070697aa07325887df077a739" }
-#Liquidswap = { local = "./interface/pontem-Liquidswap" }
-#LiquidswapLP = { local = "./interface/pontem-LiquidswapLP" }
-Liquidswap = { git = "https://github.com/pontem-network/liquidswap.git", rev = "13f54d85c253e3c8c9c610703b38db40b580c66f" }
-LiquidswapLP = { git = "https://github.com/pontem-network/liquidswap.git", subdir = "liquidswap_lp", rev = "13f54d85c253e3c8c9c610703b38db40b580c66f"}
+hippo-swap = { git = "https://github.com/hippospace/hippo-swap.git", rev = "84c7247b64c31843c76208130ce228d742368960" }
+CoinList = { git = "https://github.com/hippospace/aptos-coin-list.git", subdir = "", rev = "30e1612ba27de83dff047737ed18089721f7e06f" }
+Liquidswap = { git = "https://github.com/pontem-network/liquidswap.git", rev = "1d4d3b6076f526b8fb6a95a9519f3930d67291a7" }
+LiquidswapLP = { git = "https://github.com/pontem-network/liquidswap.git", subdir = "liquidswap_lp", rev = "1d4d3b6076f526b8fb6a95a9519f3930d67291a7"}
 basiq = { local = "./interface/basiq-basiq" }
 #ditto-staking = { local = "./interface/ditto-research" }
 tortuga-stub = { local = "./interface/tortuga" }
