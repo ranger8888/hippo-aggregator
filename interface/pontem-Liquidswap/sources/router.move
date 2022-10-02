@@ -1,5 +1,5 @@
 
-module Liquidswap::router {
+module liquidswap::router {
     use aptos_framework::coin::{Self, Coin};
     public fun swap_exact_coin_for_coin<X, Y, LP>(
         coin_in: Coin<X>,

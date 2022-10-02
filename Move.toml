@@ -10,7 +10,7 @@ Liquidswap = { git = "https://github.com/pontem-network/liquidswap.git", rev = "
 LiquidswapLP = { git = "https://github.com/pontem-network/liquidswap.git", subdir = "liquidswap_lp", rev = "1d4d3b6076f526b8fb6a95a9519f3930d67291a7"}
 basiq = { local = "./interface/basiq-basiq" }
 #ditto-staking = { local = "./interface/ditto-research" }
-tortuga-stub = { local = "./interface/tortuga" }
+#tortuga = { local = "./interface/tortuga" }
 
 [addresses]
 hippo_aggregator = "89576037b3cc0b89645ea393a47787bb348272c76d6941c574b053672b848039"
