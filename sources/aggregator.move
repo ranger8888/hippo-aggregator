@@ -24,6 +24,7 @@ module hippo_aggregator::aggregator {
     const DEX_BASIQ: u8 = 4;
     const DEX_DITTO: u8 = 5;
     const DEX_TORTUGA: u8 = 6;
+    const DEX_APTOSWAP: u8 = 7;
 
     const HIPPO_CONSTANT_PRODUCT:u64 = 1;
     const HIPPO_STABLE_CURVE:u64 = 2;
@@ -246,6 +247,17 @@ module hippo_aggregator::aggregator {
             }
             else {
                 abort E_INVALID_PAIR_OF_TORTUGA
+            }
+        }
+        else if (dex_type == DEX_APTOSWAP) {
+            use Aptoswap::pool;
+            if (is_x_to_y) {
+                let y_out = pool::swap_x_to_y_direct<X, Y>(x_in);
+                (option::none(), y_out)
+            }
+            else {
+                let y_out = pool::swap_y_to_x_direct<Y, X>(x_in);
+                (option::none(), y_out)
             }
         }
         else {

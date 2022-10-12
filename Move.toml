@@ -11,6 +11,7 @@ LiquidswapLP = { local = "./interface/pontem-LiquidswapLP" }
 basiq = { local = "./interface/basiq-basiq" }
 ditto-staking = { local = "./interface/ditto-research" }
 tortuga-stub = { local = "./interface/tortuga" }
+Aptoswap = { local = "./interface/aptoswap" }
 
 [addresses]
 hippo_aggregator = "89576037b3cc0b89645ea393a47787bb348272c76d6941c574b053672b848039"
