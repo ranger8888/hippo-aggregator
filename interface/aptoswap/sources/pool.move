@@ -1,5 +1,4 @@
 module Aptoswap::pool {
-    use std::string;
     use aptos_framework::coin;
 
     public fun swap_x_to_y_direct<X, Y>(in_coin: coin::Coin<X>): coin::Coin<Y> {
