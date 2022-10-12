@@ -36,6 +36,7 @@ module hippo_aggregator::aggregator {
     const E_INVALID_PAIR_OF_TORTUGA: u64 = 6;
     const E_TYPE_NOT_EQUAL: u64 = 7;
     const E_COIN_STORE_NOT_EXITES: u64 = 8;
+    const E_UNSUPPORTED_NUM_STEPS: u64 = 9;
 
     struct EventStore has key {
         swap_step_events: EventHandle<SwapStepEvent>,
@@ -416,6 +417,82 @@ module hippo_aggregator::aggregator {
         check_and_deposit_opt(sender, coin_x_remain);
         check_and_deposit_opt(sender, coin_y_remain);
         check_and_deposit_opt(sender, coin_z_remain);
+        check_and_deposit(sender, coin_m);
+    }
+
+    public fun swap_direct<
+        X, Y, Z, OutCoin, E1, E2, E3
+    >(
+        num_steps: u8,
+        first_dex_type: u8,
+        first_pool_type: u64,
+        first_is_x_to_y: bool, // first trade uses normal order
+        second_dex_type: u8,
+        second_pool_type: u64,
+        second_is_x_to_y: bool, // second trade uses normal order
+        third_dex_type: u8,
+        third_pool_type: u64,
+        third_is_x_to_y: bool, // second trade uses normal order
+        x_in: coin::Coin<X>
+    ):(Option<coin::Coin<X>>, Option<coin::Coin<Y>>, Option<coin::Coin<Z>>, coin::Coin<OutCoin>) acquires EventStore {
+        if (num_steps == 1) {
+            let (coin_x_remain, coin_m) = get_intermediate_output<X, OutCoin, E1>(first_dex_type, first_pool_type, first_is_x_to_y, x_in);
+            (coin_x_remain, option::some(coin::zero<Y>()), option::some(coin::zero<Z>()), coin_m)
+        }
+        else if (num_steps == 2) {
+            let (coin_x_remain, coin_y) = get_intermediate_output<X, Y, E1>(first_dex_type, first_pool_type, first_is_x_to_y, x_in);
+            let (coin_y_remain, coin_m) = get_intermediate_output<Y, OutCoin, E2>(second_dex_type, second_pool_type, second_is_x_to_y, coin_y);
+            (coin_x_remain, coin_y_remain, option::some(coin::zero<Z>()), coin_m)
+        }
+        else if (num_steps == 3) {
+            let (coin_x_remain, coin_y) = get_intermediate_output<X, Y, E1>(first_dex_type, first_pool_type, first_is_x_to_y, x_in);
+            let (coin_y_remain, coin_z) = get_intermediate_output<Y, Z, E2>(second_dex_type, second_pool_type, second_is_x_to_y, coin_y);
+            let (coin_z_remain, coin_m) = get_intermediate_output<Z, OutCoin, E3>(third_dex_type, third_pool_type, third_is_x_to_y, coin_z);
+            (coin_x_remain, coin_y_remain, coin_z_remain, coin_m)
+        }
+        else {
+            abort E_UNSUPPORTED_NUM_STEPS
+        }
+    }
+
+    #[cmd]
+    public entry fun swap<
+        X, Y, Z, OutCoin, E1, E2, E3
+    >(
+        sender: &signer,
+        num_steps: u8,
+        first_dex_type: u8,
+        first_pool_type: u64,
+        first_is_x_to_y: bool, // first trade uses normal order
+        second_dex_type: u8,
+        second_pool_type: u64,
+        second_is_x_to_y: bool, // second trade uses normal order
+        third_dex_type: u8,
+        third_pool_type: u64,
+        third_is_x_to_y: bool, // second trade uses normal order
+        x_in: u64,
+        m_min_out: u64,
+    ) acquires EventStore {
+        let coin_x = coin::withdraw<X>(sender, x_in);
+        let (x_remain, y_remain, z_remain, coin_m) = swap_direct<X, Y, Z, OutCoin, E1, E2, E3>(
+            num_steps,
+            first_dex_type,
+            first_pool_type,
+            first_is_x_to_y,
+            second_dex_type,
+            second_pool_type,
+            second_is_x_to_y,
+            third_dex_type,
+            third_pool_type,
+            third_is_x_to_y,
+            coin_x
+        );
+
+        assert!(coin::value(&coin_m) >= m_min_out, E_OUTPUT_LESS_THAN_MINIMUM);
+
+        check_and_deposit_opt(sender, x_remain);
+        check_and_deposit_opt(sender, y_remain);
+        check_and_deposit_opt(sender, z_remain);
         check_and_deposit(sender, coin_m);
     }
 
