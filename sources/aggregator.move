@@ -5,7 +5,6 @@ module hippo_aggregator::aggregator {
     use std::option;
     use std::option::{Option, is_some, borrow};
     use hippo_swap::cp_swap;
-    use hippo_swap::stable_curve_swap;
     use hippo_swap::piece_swap;
     use econia::market;
     use aptos_std::event::EventHandle;
@@ -13,8 +12,8 @@ module hippo_aggregator::aggregator {
     use aptos_std::event;
     use aptos_std::type_info::{TypeInfo, type_of};
     use aptos_framework::aptos_coin::AptosCoin;
-    use ditto::staked_coin;
-    use tortuga::staked_aptos_coin;
+    // use ditto::staked_coin;
+    // use tortuga::staked_aptos_coin;
 
     const HI_64: u64 = 0xffffffffffffffff;
 
@@ -27,7 +26,6 @@ module hippo_aggregator::aggregator {
     const DEX_APTOSWAP: u8 = 7;
 
     const HIPPO_CONSTANT_PRODUCT:u64 = 1;
-    const HIPPO_STABLE_CURVE:u64 = 2;
     const HIPPO_PIECEWISE:u64 = 3;
 
     const E_UNKNOWN_POOL_TYPE: u64 = 1;
@@ -80,8 +78,8 @@ module hippo_aggregator::aggregator {
     #[cmd]
     public entry fun init_coin_store_all(admin: &signer){
         init_coin_store<AptosCoin>(admin);
-        init_coin_store<staked_coin::StakedAptos>(admin);
-        init_coin_store<staked_aptos_coin::StakedAptosCoin>(admin);
+        // init_coin_store<staked_coin::StakedAptos>(admin);
+        // init_coin_store<staked_aptos_coin::StakedAptosCoin>(admin);
     }
 
     #[test_only]
@@ -133,7 +131,7 @@ module hippo_aggregator::aggregator {
         pool_type: u64,
         is_x_to_y: bool,
         x_in: coin::Coin<X>
-    ): (Option<coin::Coin<X>>, coin::Coin<Y>) acquires EventStore, CoinStore {
+    ): (Option<coin::Coin<X>>, coin::Coin<Y>) acquires EventStore{
         let coin_in_value = coin::value(&x_in);
         let (x_out_opt, y_out) = if (dex_type == DEX_HIPPO) {
             if (pool_type == HIPPO_CONSTANT_PRODUCT) {
@@ -145,20 +143,6 @@ module hippo_aggregator::aggregator {
                 else {
                     let (y_out, x_out) = cp_swap::swap_y_to_exact_x_direct<Y, X>(x_in);
                     coin::destroy_zero(x_out);
-                    (option::none(), y_out)
-                }
-            }
-            else if (pool_type == HIPPO_STABLE_CURVE) {
-                if (is_x_to_y) {
-                    let (zero, zero2, y_out) = stable_curve_swap::swap_x_to_exact_y_direct<X, Y>(x_in);
-                    coin::destroy_zero(zero);
-                    coin::destroy_zero(zero2);
-                    (option::none(), y_out)
-                }
-                else {
-                    let (zero, y_out, zero2) = stable_curve_swap::swap_y_to_exact_x_direct<Y, X>(x_in);
-                    coin::destroy_zero(zero);
-                    coin::destroy_zero(zero2);
                     (option::none(), y_out)
                 }
             }
@@ -198,56 +182,12 @@ module hippo_aggregator::aggregator {
             }
         }
         else if (dex_type == DEX_PONTEM) {
-            use pontem::router;
-            (option::none(), router::swap_exact_coin_for_coin<X, Y, E>(@hippo_aggregator, x_in, 0))
+            use liquidswap::router;
+            (option::none(), router::swap_exact_coin_for_coin<X, Y, E>(x_in, 0))
         }
         else if (dex_type == DEX_BASIQ) {
             use basiq::dex;
             (option::none(), dex::swap<X, Y>(x_in))
-        }
-        else if (dex_type == DEX_DITTO) {
-            use ditto::ditto_staking;
-            if (type_of<X>() == type_of<AptosCoin>() && type_of<Y>() == type_of<staked_coin::StakedAptos>()){
-                (
-                    option::none(),
-                    change_coin_type<staked_coin::StakedAptos, Y>(
-                        ditto_staking::exchange_aptos(
-                            change_coin_type<X, AptosCoin>(x_in)
-                        )
-                    )
-                )
-            }
-            else if (type_of<X>() == type_of<staked_coin::StakedAptos>() && type_of<Y>() == type_of<AptosCoin>()){
-                (
-                    option::none(),
-                    change_coin_type<AptosCoin, Y>(
-                        ditto_staking::exchange_staptos(
-                            change_coin_type<X, staked_coin::StakedAptos>(x_in)
-                        )
-                    ))
-            }
-            else {
-                abort E_INVALID_PAIR_OF_DITTO
-            }
-        }
-        else if (dex_type == DEX_TORTUGA){
-            use tortuga::stake_router;
-            if (
-                type_of<X>() == type_of<AptosCoin>() &&
-                    type_of<Y>() == type_of<staked_aptos_coin::StakedAptosCoin>()){
-                (
-                    option::none(),
-                    change_coin_type<
-                        staked_aptos_coin::StakedAptosCoin, Y>(
-                        stake_router::stake_coins(
-                            change_coin_type<X,AptosCoin>(x_in)
-                        )
-                    )
-                )
-            }
-            else {
-                abort E_INVALID_PAIR_OF_TORTUGA
-            }
         }
         else if (dex_type == DEX_APTOSWAP) {
             use Aptoswap::pool;
@@ -260,6 +200,50 @@ module hippo_aggregator::aggregator {
                 (option::none(), y_out)
             }
         }
+        // }
+        //     }
+        //         abort E_INVALID_PAIR_OF_TORTUGA
+        //     else {
+        //     }
+        //         )
+        //             )
+        //                 )
+        //                     change_coin_type<X,AptosCoin>(x_in)
+        //                 stake_router::stake_coins(
+        //                 staked_aptos_coin::StakedAptosCoin, Y>(
+        //             change_coin_type<
+        //             option::none(),
+        //         (
+        //             type_of<Y>() == type_of<staked_aptos_coin::StakedAptosCoin>()){
+        //         type_of<X>() == type_of<AptosCoin>() &&
+        //     if (
+        //     use tortuga::stake_router;
+        // else if (dex_type == DEX_TORTUGA){
+        // }
+        //     }
+        //         abort E_INVALID_PAIR_OF_DITTO
+        //     else {
+        //     }
+        //             ))
+        //                 )
+        //                     change_coin_type<X, staked_coin::StakedAptos>(x_in)
+        //                 ditto_staking::exchange_staptos(
+        //             change_coin_type<AptosCoin, Y>(
+        //             option::none(),
+        //         (
+        //     else if (type_of<X>() == type_of<staked_coin::StakedAptos>() && type_of<Y>() == type_of<AptosCoin>()){
+        //     }
+        //         )
+        //             )
+        //                 )
+        //                     change_coin_type<X, AptosCoin>(x_in)
+        //                 ditto_staking::exchange_aptos(
+        //             change_coin_type<staked_coin::StakedAptos, Y>(
+        //             option::none(),
+        //         (
+        //     if (type_of<X>() == type_of<AptosCoin>() && type_of<Y>() == type_of<staked_coin::StakedAptos>()){
+        //     use ditto::ditto_staking;
+        // else if (dex_type == DEX_DITTO) {
         else {
             abort E_UNKNOWN_DEX
         };
@@ -303,7 +287,7 @@ module hippo_aggregator::aggregator {
         pool_type: u64,
         is_x_to_y: bool,
         x_in: coin::Coin<X>
-    ):(Option<coin::Coin<X>>, coin::Coin<Y>) acquires EventStore, CoinStore {
+    ):(Option<coin::Coin<X>>, coin::Coin<Y>) acquires EventStore {
         get_intermediate_output<X, Y, E>(dex_type, pool_type, is_x_to_y, x_in)
     }
 
@@ -315,7 +299,7 @@ module hippo_aggregator::aggregator {
         first_is_x_to_y: bool, // first trade uses normal order
         x_in: u64,
         y_min_out: u64,
-    ) acquires EventStore, CoinStore {
+    ) acquires EventStore {
         let coin_in = coin::withdraw<X>(sender, x_in);
         let (coin_remain_opt, coin_out) = one_step_direct<X, Y, E>(first_dex_type, first_pool_type, first_is_x_to_y, coin_in);
         assert!(coin::value(&coin_out) >= y_min_out, E_OUTPUT_LESS_THAN_MINIMUM);
@@ -333,7 +317,7 @@ module hippo_aggregator::aggregator {
       second_pool_type: u64,
       second_is_x_to_y: bool, // second trade uses normal order
       x_in: coin::Coin<X>
-    ):(Option<coin::Coin<X>>, Option<coin::Coin<Y>>, coin::Coin<Z>) acquires EventStore, CoinStore {
+    ):(Option<coin::Coin<X>>, Option<coin::Coin<Y>>, coin::Coin<Z>) acquires EventStore {
         let (coin_x_remain, coin_y) = get_intermediate_output<X, Y, E1>(first_dex_type, first_pool_type, first_is_x_to_y, x_in);
         let (coin_y_remain, coin_z) = get_intermediate_output<Y, Z, E2>(second_dex_type, second_pool_type, second_is_x_to_y, coin_y);
         (coin_x_remain, coin_y_remain, coin_z)
@@ -352,7 +336,7 @@ module hippo_aggregator::aggregator {
         second_is_x_to_y: bool, // second trade uses normal order
         x_in: u64,
         z_min_out: u64,
-    ) acquires EventStore, CoinStore {
+    ) acquires EventStore {
         let coin_x = coin::withdraw<X>(sender, x_in);
         let (
             coin_x_remain,
@@ -386,7 +370,7 @@ module hippo_aggregator::aggregator {
         third_pool_type: u64,
         third_is_x_to_y: bool, // second trade uses normal order
         x_in: coin::Coin<X>
-    ):(Option<coin::Coin<X>>, Option<coin::Coin<Y>>, Option<coin::Coin<Z>>, coin::Coin<M>) acquires EventStore, CoinStore {
+    ):(Option<coin::Coin<X>>, Option<coin::Coin<Y>>, Option<coin::Coin<Z>>, coin::Coin<M>) acquires EventStore {
         let (coin_x_remain, coin_y) = get_intermediate_output<X, Y, E1>(first_dex_type, first_pool_type, first_is_x_to_y, x_in);
         let (coin_y_remain, coin_z) = get_intermediate_output<Y, Z, E2>(second_dex_type, second_pool_type, second_is_x_to_y, coin_y);
         let (coin_z_remain, coin_m) = get_intermediate_output<Z, M, E3>(third_dex_type, third_pool_type, third_is_x_to_y, coin_z);
@@ -409,7 +393,7 @@ module hippo_aggregator::aggregator {
         third_is_x_to_y: bool, // second trade uses normal order
         x_in: u64,
         m_min_out: u64,
-    ) acquires EventStore, CoinStore {
+    ) acquires EventStore {
         let coin_x = coin::withdraw<X>(sender, x_in);
         let (
             coin_x_remain,

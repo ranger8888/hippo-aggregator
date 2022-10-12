@@ -5,21 +5,22 @@ module hippo_aggregator::devnet {
 
     const BTC_AMOUNT: u64 = 100000000 * 1000;
     const USDC_AMOUNT: u64 = 100000000 * 1000 * 10000;
-
     struct PontemLP<phantom X, phantom Y> {}
+    struct PontemLP2<phantom X, phantom Y, phantom curve> {}
 
     #[cmd(desc=b"Create BTC-USDC pool on pontem and add liquidity")]
     public entry fun mock_deploy_pontem(admin: signer) {
-        use pontem::scripts;
+        use liquidswap::scripts;
+        use liquidswap::curves;
+        // BTC-USDC pair
         mint_to_wallet<BTC>(&admin, BTC_AMOUNT);
         mint_to_wallet<USDC>(&admin, USDC_AMOUNT);
-        scripts::register_pool_and_add_liquidity<BTC, USDC, PontemLP<BTC, USDC>>(
+        scripts::register_pool_and_add_liquidity<BTC, USDC, curves::Uncorrelated>(
             &admin,
-            2, // uncorrelated,
             BTC_AMOUNT,
-            0,
+            BTC_AMOUNT,
             USDC_AMOUNT,
-            0
+            USDC_AMOUNT
         )
     }
 

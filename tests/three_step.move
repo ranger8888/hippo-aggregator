@@ -67,7 +67,6 @@ module hippo_aggregator::three_step {
             aptos_account::create_account(signer::address_of(hippo_swap));
         };
         coin_list::initialize<>(coin_list);
-        devnet_coins::deploy(coin_list);
         cp_scripts::mock_deploy_script(hippo_swap);
         init_market_test<BTC, USDC>(ASK, econia, aggregator, user_0, user_1, user_2, user_3);
         let quote_coins_spent:u64 = 238000;
