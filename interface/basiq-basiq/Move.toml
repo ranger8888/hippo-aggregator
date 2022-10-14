@@ -3,7 +3,7 @@ name = "basiq"
 version = "0.0.0"
 
 [dependencies]
-AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework/", rev = "827e1c63739bbf06dad94f503a325e08b0daeb97" }
+AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework/", rev = "5b0ae7fbea9623e4042c2ef288801a6e44d3d75c" }
 
 [addresses]
 basiq = "4885b08864b81ca42b19c38fff2eb958b5e312b1ec366014d4afff2775c19aab"
