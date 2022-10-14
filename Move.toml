@@ -6,8 +6,8 @@ version = "0.0.0"
 Econia = { git = "https://github.com/manahip/econia.git", subdir = "src/move/econia", rev = "4eeb9e3fa7a8f5985b7d0e71ddf875d9a6f2b690" }
 hippo-swap = { git = "https://github.com/hippospace/hippo-swap.git", rev = "84c7247b64c31843c76208130ce228d742368960" }
 CoinList = { git = "https://github.com/hippospace/aptos-coin-list.git", subdir = "", rev = "30e1612ba27de83dff047737ed18089721f7e06f" }
-Liquidswap = { git = "https://github.com/pontem-network/liquidswap.git", rev = "1d4d3b6076f526b8fb6a95a9519f3930d67291a7" }
-LiquidswapLP = { git = "https://github.com/pontem-network/liquidswap.git", subdir = "liquidswap_lp", rev = "1d4d3b6076f526b8fb6a95a9519f3930d67291a7"}
+Liquidswap = { local = "./interface/pontem-Liquidswap" }
+LiquidswapLP = { local = "./interface/pontem-LiquidswapLP" }
 basiq = { local = "./interface/basiq-basiq" }
 #ditto-staking = { local = "./interface/ditto-research" }
 #tortuga = { local = "./interface/tortuga" }
