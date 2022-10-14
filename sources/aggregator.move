@@ -4,8 +4,6 @@ module hippo_aggregator::aggregator {
     use std::signer;
     use std::option;
     use std::option::{Option, is_some, borrow};
-    use hippo_swap::cp_swap;
-    use hippo_swap::piece_swap;
     use econia::market;
     use aptos_std::event::EventHandle;
     use aptos_framework::timestamp;
@@ -135,31 +133,7 @@ module hippo_aggregator::aggregator {
     ): (Option<coin::Coin<X>>, coin::Coin<Y>) acquires EventStore{
         let coin_in_value = coin::value(&x_in);
         let (x_out_opt, y_out) = if (dex_type == DEX_HIPPO) {
-            if (pool_type == HIPPO_CONSTANT_PRODUCT) {
-                if (is_x_to_y) {
-                    let (x_out, y_out) = cp_swap::swap_x_to_exact_y_direct<X, Y>(x_in);
-                    coin::destroy_zero(x_out);
-                    (option::none(), y_out)
-                }
-                else {
-                    let (y_out, x_out) = cp_swap::swap_y_to_exact_x_direct<Y, X>(x_in);
-                    coin::destroy_zero(x_out);
-                    (option::none(), y_out)
-                }
-            }
-            else if (pool_type == HIPPO_PIECEWISE) {
-                if (is_x_to_y) {
-                    let y_out = piece_swap::swap_x_to_y_direct<X, Y>(x_in);
-                    (option::none(), y_out)
-                }
-                else {
-                    let y_out = piece_swap::swap_y_to_x_direct<Y, X>(x_in);
-                    (option::none(), y_out)
-                }
-            }
-            else {
-                abort E_UNKNOWN_POOL_TYPE
-            }
+            abort E_UNKNOWN_POOL_TYPE
         }
         else if (dex_type == DEX_ECONIA) {
             // deposit into temporary wallet!
