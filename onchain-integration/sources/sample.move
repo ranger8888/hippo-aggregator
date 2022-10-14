@@ -24,6 +24,7 @@ module sample::sample {
         target_address: address,
     ) {
         let coin_x = coin::withdraw<X>(sender, x_in);
+        // invoke aggregator
         let (x_remain, y_remain, z_remain, coin_out) = swap_direct<X, Y, Z, OutCoin, E1, E2, E3>(
             num_steps,
             first_dex_type,
@@ -38,6 +39,7 @@ module sample::sample {
             coin_x
         );
 
+        // deal with output
         check_and_deposit_opt(sender, x_remain);
         check_and_deposit_opt(sender, y_remain);
         check_and_deposit_opt(sender, z_remain);

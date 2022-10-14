@@ -2,7 +2,7 @@
 
 This sample here demonstrates how to integrate with hippo-aggregator on-chain
 
-Sample code at end of `src/cli.ts`:
+Sample code at end of `typescript/src/cli.ts`:
 
 ```typescript
 const testSwap = async(symbolX: string, symbolY: string, xInAmt: string, targetAddress: string) => {
@@ -35,4 +35,51 @@ const testSwap = async(symbolX: string, symbolY: string, xInAmt: string, targetA
   await sendPayloadTxAndLog(client, account, payload);
 }
 
+```
+
+The sample TS code invokes an onchain function, which uses the aggregator to perform a swap, and then deposit the output
+coin to a separate address.
+
+```move
+public entry fun swap_and_transfer<
+    X, Y, Z, OutCoin, E1, E2, E3
+>(
+    sender: &signer,
+    // parameters for aggregator swap
+    num_steps: u8,
+    first_dex_type: u8,
+    first_pool_type: u64,
+    first_is_x_to_y: bool, // first trade uses normal order
+    second_dex_type: u8,
+    second_pool_type: u64,
+    second_is_x_to_y: bool, // second trade uses normal order
+    third_dex_type: u8,
+    third_pool_type: u64,
+    third_is_x_to_y: bool, // second trade uses normal order
+    x_in: u64,
+    // address to send output to
+    target_address: address,
+) {
+    let coin_x = coin::withdraw<X>(sender, x_in);
+    // invoke aggregator
+    let (x_remain, y_remain, z_remain, coin_out) = swap_direct<X, Y, Z, OutCoin, E1, E2, E3>(
+        num_steps,
+        first_dex_type,
+        first_pool_type,
+        first_is_x_to_y,
+        second_dex_type,
+        second_pool_type,
+        second_is_x_to_y,
+        third_dex_type,
+        third_pool_type,
+        third_is_x_to_y,
+        coin_x
+    );
+
+    // deal with output
+    check_and_deposit_opt(sender, x_remain);
+    check_and_deposit_opt(sender, y_remain);
+    check_and_deposit_opt(sender, z_remain);
+    coin::deposit(target_address, coin_out);
+}
 ```
