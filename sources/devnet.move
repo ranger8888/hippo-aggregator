@@ -13,8 +13,8 @@ module hippo_aggregator::devnet {
         use liquidswap::curves;
         deploy_pontem<BTC, USDC, curves::Uncorrelated>(&admin,BTC_AMOUNT, STABLE_COIN_AMOUNT);
         deploy_pontem<BTC, USDT, curves::Uncorrelated>(&admin,BTC_AMOUNT, STABLE_COIN_AMOUNT);
-        deploy_pontem<USDC, USDT, curves::Stable>(&admin,BTC_AMOUNT, STABLE_COIN_AMOUNT);
-        deploy_pontem<DAI, USDC, curves::Stable>(&admin,BTC_AMOUNT, STABLE_COIN_AMOUNT);
+        deploy_pontem<USDC, USDT, curves::Stable>(&admin,STABLE_COIN_AMOUNT, STABLE_COIN_AMOUNT);
+        deploy_pontem<DAI, USDC, curves::Stable>(&admin,STABLE_COIN_AMOUNT, STABLE_COIN_AMOUNT);
 
     }
     fun deploy_pontem<xCoin,yCoin, curve>(admin: &signer, xAmount: u64, yAmount: u64){
