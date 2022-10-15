@@ -8,7 +8,23 @@ module hippo_aggregator::devnet {
     struct PontemLP<phantom X, phantom Y> {}
     struct PontemLP2<phantom X, phantom Y, phantom curve> {}
 
-    #[cmd(desc=b"Create BTC-USDC pool on pontem and add liquidity")]
+    #[cmd(desc=b"Create pools on aux")]
+    public entry fun mock_deploy_aux(admin: signer) {
+        deploy_aux<BTC, USDC>(&admin, BTC_AMOUNT, STABLE_COIN_AMOUNT);
+        deploy_aux<BTC, USDT>(&admin, BTC_AMOUNT, STABLE_COIN_AMOUNT);
+        deploy_aux<USDC, USDT>(&admin, STABLE_COIN_AMOUNT, STABLE_COIN_AMOUNT);
+        deploy_aux<DAI, USDC>(&admin, STABLE_COIN_AMOUNT, STABLE_COIN_AMOUNT);
+    }
+
+    fun deploy_aux<X, Y>(admin: &signer, xAmount:u64, yAmount: u64) {
+        use aux::amm;
+        amm::create_pool<X, Y>(admin, 1);
+        mint_to_wallet<X>(admin, xAmount);
+        mint_to_wallet<Y>(admin, yAmount);
+        amm::add_exact_liquidity<X ,Y>(admin, xAmount, yAmount)
+    }
+
+    #[cmd(desc=b"Create pools on pontem and add liquidity")]
     public entry fun mock_deploy_pontem(admin: signer) {
         use liquidswap::curves;
         deploy_pontem<BTC, USDC, curves::Uncorrelated>(&admin,BTC_AMOUNT, STABLE_COIN_AMOUNT);
