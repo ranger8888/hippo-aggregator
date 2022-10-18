@@ -74,49 +74,70 @@ module hippo_aggregator::volume {
         let volume = borrow_global_mut<Volume>(admin_addr);
         volume.poster = new_poster
     }
-
-    public entry fun post(
+    public entry fun post_v2(
         poster: &signer,
-        amount: u64,
+        total_volume: u128,
         last_24_volume: u64,
         last_7d_volume: u64,
-        round_start_time_24h: u64,
-        round_start_time_7d: u64,
-        new_data_end_time: u64,
-        new_data_end_seauence_number: u64,
+        data_end_time: u64,
+        data_end_seauence_number: u64,
+
+        total_volume_history_24h_start_time: vector<u64>,
+        total_volume_history_24h_volume: vector<u64>,
+
+        total_volume_history_7d_start_time: vector<u64>,
+        total_volume_history_7d_volume: vector<u64>,
+
         trading_pairs_24h_coin_x: vector<vector<u8>>,
         trading_pairs_24h_coin_y: vector<vector<u8>>,
         trading_pairs_24h_amount: vector<u64>,
+
         trading_pairs_7d_coin_x: vector<vector<u8>>,
         trading_pairs_7d_coin_y: vector<vector<u8>>,
         trading_pairs_7d_amount: vector<u64>,
+
         pool_provider_24h_dex_type: vector<u8>,
         pool_provider_24h_amount: vector<u64>,
+
         pool_provider_7d_dex_type: vector<u8>,
-        pool_provider_7d_amount: vector<u64>
-    ) acquires Volume {
+        pool_provider_7d_amount: vector<u64>,
+    ) acquires Volume{
         let volume = borrow_global_mut<Volume>(@hippo_aggregator);
         assert!(signer::address_of(poster) == volume.poster, E_NOT_POSTER);
-        assert!(volume.data_end_sequence_number == 0 || new_data_end_seauence_number != volume.data_end_sequence_number, E_REPEAT_POST);
-        assert!(vector::length(&trading_pairs_24h_coin_x) == vector::length(&trading_pairs_24h_coin_y), E_VERCTOR_LENGT_NOT_EQUAL);
-        assert!(vector::length(&trading_pairs_24h_coin_x) == vector::length(&trading_pairs_24h_amount), E_VERCTOR_LENGT_NOT_EQUAL);
-        assert!(vector::length(&trading_pairs_7d_coin_x) == vector::length(&trading_pairs_7d_coin_y), E_VERCTOR_LENGT_NOT_EQUAL);
-        assert!(vector::length(&trading_pairs_7d_coin_x) == vector::length(&trading_pairs_7d_amount), E_VERCTOR_LENGT_NOT_EQUAL);
-        assert!(vector::length(&pool_provider_24h_dex_type) == vector::length(&pool_provider_24h_amount), E_VERCTOR_LENGT_NOT_EQUAL);
-        assert!(vector::length(&pool_provider_7d_dex_type) == vector::length(&pool_provider_7d_amount), E_VERCTOR_LENGT_NOT_EQUAL);
 
+        volume.total_volume = total_volume;
         volume.last_24h_volume = last_24_volume;
         volume.last_7d_volume = last_7d_volume;
-        volume.data_end_time = new_data_end_time;
-        volume.data_end_sequence_number = new_data_end_seauence_number;
-        volume.total_volume = volume.total_volume + (amount as u128);
-        add_volume(&mut volume.total_volume_history_24h, round_start_time_24h, amount);
-        add_volume(&mut volume.total_volume_history_7d, round_start_time_7d, amount);
+        volume.data_end_time = data_end_time;
+        volume.data_end_sequence_number = data_end_seauence_number;
 
         volume.top_trading_pairs_24h = parse_trading_pairs_vector(&trading_pairs_24h_coin_x, &trading_pairs_24h_coin_y, &trading_pairs_24h_amount);
         volume.top_trading_pairs_7d = parse_trading_pairs_vector(&trading_pairs_7d_coin_x, &trading_pairs_7d_coin_y, &trading_pairs_7d_amount);
         volume.top_pool_provider_24h = parse_pool_provider_vector(&pool_provider_24h_dex_type, &pool_provider_24h_amount);
         volume.top_pool_provider_7d = parse_pool_provider_vector(&pool_provider_7d_dex_type, &pool_provider_7d_amount);
+        volume.total_volume_history_24h = parse_volume_history_vector(&total_volume_history_24h_start_time,&total_volume_history_24h_volume);
+        volume.total_volume_history_7d = parse_volume_history_vector(&total_volume_history_7d_start_time,&total_volume_history_7d_volume);
+    }
+    public entry fun post(
+        _poster: &signer,
+        _amount: u64,
+        _last_24_volume: u64,
+        _last_7d_volume: u64,
+        _round_start_time_24h: u64,
+        _round_start_time_7d: u64,
+        _new_data_end_time: u64,
+        _new_data_end_seauence_number: u64,
+        _trading_pairs_24h_coin_x: vector<vector<u8>>,
+        _trading_pairs_24h_coin_y: vector<vector<u8>>,
+        _trading_pairs_24h_amount: vector<u64>,
+        _trading_pairs_7d_coin_x: vector<vector<u8>>,
+        _trading_pairs_7d_coin_y: vector<vector<u8>>,
+        _trading_pairs_7d_amount: vector<u64>,
+        _pool_provider_24h_dex_type: vector<u8>,
+        _pool_provider_24h_amount: vector<u64>,
+        _pool_provider_7d_dex_type: vector<u8>,
+        _pool_provider_7d_amount: vector<u64>
+    ){
     }
     #[cmd]
     public entry fun clean(poster: &signer) acquires Volume{
@@ -125,6 +146,8 @@ module hippo_aggregator::volume {
         volume.total_volume = 0;
         volume.data_end_sequence_number = 0;
         volume.data_end_time = 0;
+        volume.last_24h_volume = 0;
+        volume.last_7d_volume = 0;
         volume.total_volume_history_24h = vector::empty();
         volume.total_volume_history_7d = vector::empty();
         volume.top_trading_pairs_24h = vector::empty();
@@ -150,6 +173,23 @@ module hippo_aggregator::volume {
         };
         trading_pairs
     }
+
+    fun parse_volume_history_vector(
+        start_time_vector: &vector<u64>,
+        amount_vector: &vector<u64>,
+    ):vector<TotalVolume>{
+        let volume_history = vector::empty<TotalVolume>();
+        let i = 0;
+        while (i < vector::length(start_time_vector)){
+            vector::push_back(&mut volume_history, TotalVolume{
+                start_time: *vector::borrow(start_time_vector, i),
+                amount: *vector::borrow(amount_vector, i)
+            });
+            i = i+1;
+        };
+        volume_history
+    }
+
     fun parse_pool_provider_vector(
         dex_type_vector: &vector<u8>,
         amount_vector: &vector<u64>,
@@ -165,6 +205,7 @@ module hippo_aggregator::volume {
         };
         pool_provider
     }
+
     fun add_volume(total_volume_array: &mut vector<TotalVolume>, round_start_time: u64, amount: u64){
         let array_length = vector::length(total_volume_array);
         if (array_length == 0){
