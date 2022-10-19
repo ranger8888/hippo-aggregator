@@ -4,7 +4,7 @@ module hippo_aggregator::aggregator {
     use std::signer;
     use std::option;
     use std::option::{Option, is_some, borrow};
-    use econia::market;
+    // use econia::market;
     use aptos_std::event::EventHandle;
     use aptos_framework::timestamp;
     use aptos_std::event;
