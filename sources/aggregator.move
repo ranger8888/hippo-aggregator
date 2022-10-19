@@ -193,9 +193,8 @@ module hippo_aggregator::aggregator {
         else if (dex_type == DEX_AUX) {
             use aux::amm;
             let y_out = coin::zero<Y>();
-            let auxSigner = borrow_global<AuxSigner>(@hippo_aggregator);
             amm::swap_exact_coin_for_coin_mut(
-                &account::create_signer_with_capability(&auxSigner.signerCapability),
+                @hippo_aggregator,
                 &mut x_in,
                 &mut y_out,
                 coin_in_value,

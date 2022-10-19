@@ -77,7 +77,7 @@ module aux::amm{
     }
 
     public fun swap_exact_coin_for_coin_mut<CoinIn, CoinOut>(
-        _sender: &signer,
+        _sender_addr: address,
         _user_in: &mut coin::Coin<CoinIn>,
         _user_out: &mut coin::Coin<CoinOut>,
         _au_in: u64,
