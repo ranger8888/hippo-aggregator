@@ -149,46 +149,46 @@ module hippo_aggregator::aggregator {
         let (x_out_opt, y_out) = if (dex_type == DEX_HIPPO) {
             abort E_UNKNOWN_POOL_TYPE
         }
-        else if (dex_type == DEX_ECONIA) {
-            // deposit into temporary wallet!
-            let y_out = coin::zero<Y>();
-            let x_value = coin::value(&x_in);
-            let market_id = pool_type;
-            if (is_x_to_y) {
-                // sell
-                market::swap_coins<X, Y>(@hippo_aggregator, market_id, false, 0, x_value, 0, HI_64, 0, &mut x_in, &mut y_out);
-            }
-            else {
-                // buy
-                market::swap_coins<Y, X>(@hippo_aggregator, market_id, true, 0, HI_64, 0, x_value, HI_64, &mut y_out, &mut x_in);
-            };
-            if (coin::value(&x_in) == 0) {
-                coin::destroy_zero(x_in);
-                (option::none(), y_out)
-            }
-            else {
-                (option::some(x_in), y_out)
-            }
-        }
+        // else if (dex_type == DEX_ECONIA) {
+        //     // deposit into temporary wallet!
+        //     let y_out = coin::zero<Y>();
+        //     let x_value = coin::value(&x_in);
+        //     let market_id = pool_type;
+        //     if (is_x_to_y) {
+        //         // sell
+        //         market::swap_coins<X, Y>(@hippo_aggregator, market_id, false, 0, x_value, 0, HI_64, 0, &mut x_in, &mut y_out);
+        //     }
+        //     else {
+        //         // buy
+        //         market::swap_coins<Y, X>(@hippo_aggregator, market_id, true, 0, HI_64, 0, x_value, HI_64, &mut y_out, &mut x_in);
+        //     };
+        //     if (coin::value(&x_in) == 0) {
+        //         coin::destroy_zero(x_in);
+        //         (option::none(), y_out)
+        //     }
+        //     else {
+        //         (option::some(x_in), y_out)
+        //     }
+        // }
         else if (dex_type == DEX_PONTEM) {
             use liquidswap::router;
             (option::none(), router::swap_exact_coin_for_coin<X, Y, E>(x_in, 0))
         }
-        else if (dex_type == DEX_BASIQ) {
-            use basiq::dex;
-            (option::none(), dex::swap<X, Y>(x_in))
-        }
-        else if (dex_type == DEX_APTOSWAP) {
-            use Aptoswap::pool;
-            if (is_x_to_y) {
-                let y_out = pool::swap_x_to_y_direct<X, Y>(x_in);
-                (option::none(), y_out)
-            }
-            else {
-                let y_out = pool::swap_y_to_x_direct<Y, X>(x_in);
-                (option::none(), y_out)
-            }
-        }
+        // else if (dex_type == DEX_BASIQ) {
+        //     use basiq::dex;
+        //     (option::none(), dex::swap<X, Y>(x_in))
+        // }
+        // else if (dex_type == DEX_APTOSWAP) {
+        //     use Aptoswap::pool;
+        //     if (is_x_to_y) {
+        //         let y_out = pool::swap_x_to_y_direct<X, Y>(x_in);
+        //         (option::none(), y_out)
+        //     }
+        //     else {
+        //         let y_out = pool::swap_y_to_x_direct<Y, X>(x_in);
+        //         (option::none(), y_out)
+        //     }
+        // }
         else if (dex_type == DEX_AUX) {
             use aux::amm;
             let y_out = coin::zero<Y>();
