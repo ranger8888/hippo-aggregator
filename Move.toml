@@ -3,8 +3,8 @@ name = "HippoAggregator"
 version = "0.0.0"
 
 [dependencies]
-Econia = { git = "https://github.com/manahip/econia.git", subdir = "src/move/econia", rev = "dc3bc281bf1010429c284d805c9d55d12ee52d0f" }
-CoinList = { git = "https://github.com/hippospace/aptos-coin-list.git", subdir = "", rev = "fad0a11128dfdc72d2fae3f27d96535e377446dd" }
+Econia = { git = "https://github.com/manahip/econia.git", subdir = "src/move/econia", rev = "5721a6586dec90c292b1655497247c3c1ebf51e5" }
+CoinList = { git = "https://github.com/hippospace/aptos-coin-list.git", subdir = "", rev = "cc2100fb533f8b989a2c28c64a15c52007a91945" }
 Liquidswap = { local = "./interface/pontem-Liquidswap" }
 basiq = { local = "./interface/basiq-basiq" }
 #ditto-staking = { local = "./interface/ditto-research" }
