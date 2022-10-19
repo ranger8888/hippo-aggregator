@@ -3,7 +3,7 @@
 module liquidswap::liquidity_pool {
     use aptos_framework::coin::Coin;
     use aptos_framework::coin;
-    use pontemlp::lp_coin::LP;
+    use liquidswap_lp::lp_coin::LP;
     use liquidswap::coin_helper;
 
     struct IsEmergency has key {}

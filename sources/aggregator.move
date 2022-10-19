@@ -146,6 +146,7 @@ module hippo_aggregator::aggregator {
         x_in: coin::Coin<X>
     ): (Option<coin::Coin<X>>, coin::Coin<Y>) acquires EventStore, AuxSigner {
         let coin_in_value = coin::value(&x_in);
+        let _is_x_to_y = is_x_to_y;
         let (x_out_opt, y_out) = if (dex_type == DEX_HIPPO) {
             abort E_UNKNOWN_POOL_TYPE
         }
@@ -193,7 +194,7 @@ module hippo_aggregator::aggregator {
             use aux::amm;
             let y_out = coin::zero<Y>();
             let auxSigner = borrow_global<AuxSigner>(@hippo_aggregator);
-            amm::coin_swap_exact_coin_for_coin(
+            amm::swap_exact_coin_for_coin_mut(
                 &account::create_signer_with_capability(&auxSigner.signerCapability),
                 &mut x_in,
                 &mut y_out,
