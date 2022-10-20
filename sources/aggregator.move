@@ -23,6 +23,7 @@ module hippo_aggregator::aggregator {
     const DEX_TORTUGA: u8 = 6;
     const DEX_APTOSWAP: u8 = 7;
     const DEX_AUX: u8 = 8;
+    const DEX_ANIMESWAP: u8 = 9;
 
     const HIPPO_CONSTANT_PRODUCT:u64 = 1;
     const HIPPO_PIECEWISE:u64 = 3;
@@ -204,6 +205,10 @@ module hippo_aggregator::aggregator {
                 0
             );
             (option::some(x_in),y_out)
+        }
+        else if (dex_type == DEX_ANIMESWAP) {
+            use SwapDeployer::AnimeSwapPoolV1;
+            (option::none(), AnimeSwapPoolV1::swap_coins_for_coins(x_in))
         }
         else {
             abort E_UNKNOWN_DEX
