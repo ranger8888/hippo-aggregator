@@ -176,21 +176,23 @@ module hippo_aggregator::aggregator {
             use liquidswap::router;
             (option::none(), router::swap_exact_coin_for_coin<X, Y, E>(x_in, 0))
         }
-        // else if (dex_type == DEX_BASIQ) {
-        //     use basiq::dex;
-        //     (option::none(), dex::swap<X, Y>(x_in))
-        // }
-        // else if (dex_type == DEX_APTOSWAP) {
-        //     use Aptoswap::pool;
-        //     if (is_x_to_y) {
-        //         let y_out = pool::swap_x_to_y_direct<X, Y>(x_in);
-        //         (option::none(), y_out)
-        //     }
-        //     else {
-        //         let y_out = pool::swap_y_to_x_direct<Y, X>(x_in);
-        //         (option::none(), y_out)
-        //     }
-        // }
+        /*
+        else if (dex_type == DEX_BASIQ) {
+            use basiq::dex;
+            (option::none(), dex::swap<X, Y>(x_in))
+        }
+        */
+        else if (dex_type == DEX_APTOSWAP) {
+            use Aptoswap::pool;
+            if (is_x_to_y) {
+                let y_out = pool::swap_x_to_y_direct<X, Y>(x_in);
+                (option::none(), y_out)
+            }
+            else {
+                let y_out = pool::swap_y_to_x_direct<Y, X>(x_in);
+                (option::none(), y_out)
+            }
+        }
         else if (dex_type == DEX_AUX) {
             use aux::amm;
             let y_out = coin::zero<Y>();
