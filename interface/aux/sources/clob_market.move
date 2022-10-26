@@ -6,16 +6,14 @@ module aux::clob_market {
     /// Emits events on order placement and fills.
     public fun place_market_order_mut<B, Q>(
         _sender_addr: address,
-        base_coin: &mut coin::Coin<B>,
-        quote_coin: &mut coin::Coin<Q>,
+        _base_coin: &mut coin::Coin<B>,
+        _quote_coin: &mut coin::Coin<Q>,
         _is_bid: bool,
         _order_type: u64,
         _limit_price: u64,
         _quantity: u64,
         _client_order_id: u128,
     ): (u64, u64) {
-        coin::destroy_zero(*base_coin);
-        coin::destroy_zero(*quote_coin);
         (0, 0)
     }
 
