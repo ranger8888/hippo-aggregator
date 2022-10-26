@@ -24,9 +24,12 @@ module hippo_aggregator::aggregator {
     const DEX_APTOSWAP: u8 = 7;
     const DEX_AUX: u8 = 8;
     const DEX_ANIMESWAP: u8 = 9;
+    const DEX_CETUS: u8 = 9;
 
     const HIPPO_CONSTANT_PRODUCT:u64 = 1;
     const HIPPO_PIECEWISE:u64 = 3;
+    const AUX_TYPE_AMM:u64 = 0;
+    const AUX_TYPE_MARKET:u64 = 1;
 
     const E_UNKNOWN_POOL_TYPE: u64 = 1;
     const E_OUTPUT_LESS_THAN_MINIMUM: u64 = 2;
@@ -37,6 +40,7 @@ module hippo_aggregator::aggregator {
     const E_TYPE_NOT_EQUAL: u64 = 7;
     const E_COIN_STORE_NOT_EXITES: u64 = 8;
     const E_UNSUPPORTED_NUM_STEPS: u64 = 9;
+
 
     struct EventStore has key {
         swap_step_events: EventHandle<SwapStepEvent>,
@@ -74,6 +78,7 @@ module hippo_aggregator::aggregator {
 
     #[cmd]
     public entry fun create_aux_signer(admin: &signer){
+        assert!(signer::address_of(admin) == @hippo_aggregator, E_NOT_ADMIN);
         let (_signer, signerCapability) = account::create_resource_account(admin,b"aux_signer");
         move_to(admin,AuxSigner{
             signerCapability
@@ -147,31 +152,31 @@ module hippo_aggregator::aggregator {
         x_in: coin::Coin<X>
     ): (Option<coin::Coin<X>>, coin::Coin<Y>) acquires EventStore {
         let coin_in_value = coin::value(&x_in);
-        let _is_x_to_y = is_x_to_y;
         let (x_out_opt, y_out) = if (dex_type == DEX_HIPPO) {
-            abort E_UNKNOWN_POOL_TYPE
+            abort E_UNKNOWN_DEX
         }
-        // else if (dex_type == DEX_ECONIA) {
-        //     // deposit into temporary wallet!
-        //     let y_out = coin::zero<Y>();
-        //     let x_value = coin::value(&x_in);
-        //     let market_id = pool_type;
-        //     if (is_x_to_y) {
-        //         // sell
-        //         market::swap_coins<X, Y>(@hippo_aggregator, market_id, false, 0, x_value, 0, HI_64, 0, &mut x_in, &mut y_out);
-        //     }
-        //     else {
-        //         // buy
-        //         market::swap_coins<Y, X>(@hippo_aggregator, market_id, true, 0, HI_64, 0, x_value, HI_64, &mut y_out, &mut x_in);
-        //     };
-        //     if (coin::value(&x_in) == 0) {
-        //         coin::destroy_zero(x_in);
-        //         (option::none(), y_out)
-        //     }
-        //     else {
-        //         (option::some(x_in), y_out)
-        //     }
-        // }
+        /*
+        else if (dex_type == DEX_ECONIA) {
+            // deposit into temporary wallet!
+            let y_out = coin::zero<Y>();
+            let x_value = coin::value(&x_in);
+            let market_id = pool_type;
+            if (is_x_to_y) {
+                // sell
+                market::swap_coins<X, Y>(@hippo_aggregator, market_id, false, 0, x_value, 0, HI_64, 0, &mut x_in, &mut y_out);
+            }
+            else {
+                // buy
+                market::swap_coins<Y, X>(@hippo_aggregator, market_id, true, 0, HI_64, 0, x_value, HI_64, &mut y_out, &mut x_in);
+            };
+            if (coin::value(&x_in) == 0) {
+                coin::destroy_zero(x_in);
+                (option::none(), y_out)
+            }
+            else {
+                (option::some(x_in), y_out)
+            }
+        }*/
         else if (dex_type == DEX_PONTEM) {
             use liquidswap::router;
             (option::none(), router::swap_exact_coin_for_coin<X, Y, E>(x_in, 0))
@@ -194,24 +199,48 @@ module hippo_aggregator::aggregator {
             }
         }
         else if (dex_type == DEX_AUX) {
-            use aux::amm;
-            let y_out = coin::zero<Y>();
-            amm::swap_exact_coin_for_coin_mut(
-                @hippo_aggregator,
-                &mut x_in,
-                &mut y_out,
-                coin_in_value,
-                0,
-                false,
-                0,
-                0
-            );
-            (option::some(x_in),y_out)
+            if (pool_type == AUX_TYPE_AMM){
+                use aux::amm;
+                let y_out = coin::zero<Y>();
+                amm::swap_exact_coin_for_coin_mut(
+                    @hippo_aggregator,
+                    &mut x_in,
+                    &mut y_out,
+                    coin_in_value,
+                    0,
+                    false,
+                    0,
+                    0
+                );
+                (option::some(x_in),y_out)
+            } else if (pool_type == AUX_TYPE_MARKET){
+                use aux::clob_market;
+                let y_out = coin::zero<Y>();
+                clob_market::place_market_order_mut(
+                    @hippo_aggregator,
+                    &mut x_in,
+                    &mut y_out,
+                    false,
+                    102,// IMMEDIATE_OR_CANCEL in aux::router,
+                    0,
+                    coin_in_value,
+                    0
+                );
+                (option::some(x_in),y_out)
+            } else {
+                abort E_UNKNOWN_POOL_TYPE
+            }
         }
         else if (dex_type == DEX_ANIMESWAP) {
             use SwapDeployer::AnimeSwapPoolV1;
             (option::none(), AnimeSwapPoolV1::swap_coins_for_coins(x_in))
         }
+        /*
+        else if (dex_type == DEX_CETUS){
+            use cetus_amm::amm_router;
+            let y_out = amm_router::swap<X, Y>(@hippo_aggregator, x_in);
+            (option::none(),y_out)
+        }*/
         else {
             abort E_UNKNOWN_DEX
         };
