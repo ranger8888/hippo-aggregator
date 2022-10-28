@@ -1,6 +1,6 @@
 module cetus_amm::amm_config {
-    const DEFAULT_TRADE_FEE_NUMERATOR: u64 = 10000;
-    const DEFAULT_TRADE_FEE_DENOMINATOR: u64 = 1;
+    const DEFAULT_TRADE_FEE_NUMERATOR: u64 = 1;
+    const DEFAULT_TRADE_FEE_DENOMINATOR: u64 = 10000;
     
     struct PoolFeeConfig<phantom CoinTypeA, phantom CoinTypeB> has key {
         trade_fee_numerator: u64,

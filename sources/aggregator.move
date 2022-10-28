@@ -235,12 +235,11 @@ module hippo_aggregator::aggregator {
             use SwapDeployer::AnimeSwapPoolV1;
             (option::none(), AnimeSwapPoolV1::swap_coins_for_coins(x_in))
         }
-        /*
         else if (dex_type == DEX_CETUS){
             use cetus_amm::amm_router;
             let y_out = amm_router::swap<X, Y>(@hippo_aggregator, x_in);
             (option::none(),y_out)
-        }*/
+        }
         else {
             abort E_UNKNOWN_DEX
         };
