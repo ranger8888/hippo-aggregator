@@ -16,5 +16,7 @@ module aux::clob_market {
     ): (u64, u64) {
         (0, 0)
     }
+    public entry fun load_market_into_event<B, Q>(_sender: &signer){
 
+    }
 }
