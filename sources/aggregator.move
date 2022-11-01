@@ -25,6 +25,7 @@ module hippo_aggregator::aggregator {
     const DEX_AUX: u8 = 8;
     const DEX_ANIMESWAP: u8 = 9;
     const DEX_CETUS: u8 = 10;
+    const DEX_PANCAKE: u8 = 11;
 
     const HIPPO_CONSTANT_PRODUCT:u64 = 1;
     const HIPPO_PIECEWISE:u64 = 3;
@@ -240,6 +241,10 @@ module hippo_aggregator::aggregator {
             let y_out = amm_router::swap<X, Y>(@hippo_aggregator, x_in);
             (option::none(),y_out)
         }
+        // else if (dex_type == DEX_PANCAKE){
+        //     use pancake::router;
+        //     (option::none(),router::swap_exact_x_to_y_direct_external<X, Y>(x_in))
+        // }
         else {
             abort E_UNKNOWN_DEX
         };
