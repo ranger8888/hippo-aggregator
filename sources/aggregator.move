@@ -10,6 +10,7 @@ module hippo_aggregator::aggregator {
     use aptos_std::event;
     use aptos_std::type_info::{TypeInfo, type_of};
     use aptos_framework::aptos_coin::AptosCoin;
+    use aptos_framework::coin::Coin;
     // use ditto::staked_coin;
     // use tortuga::staked_aptos_coin;
 
@@ -41,6 +42,7 @@ module hippo_aggregator::aggregator {
     const E_TYPE_NOT_EQUAL: u64 = 7;
     const E_COIN_STORE_NOT_EXITES: u64 = 8;
     const E_UNSUPPORTED_NUM_STEPS: u64 = 9;
+    const E_UNSUPPORTED_FIXEDOUT_SWAP: u64 = 10;
     const E_UNSUPPORTED: u64 = 10;
 
 
@@ -145,6 +147,82 @@ module hippo_aggregator::aggregator {
         init_coin_store_all(admin);
         let coin = change_coin_type<AptosCoin, AptosCoin>(coin::zero<AptosCoin>());
         coin::destroy_zero(coin)
+    }
+
+    #[cmd]
+    public entry fun swap_with_fixed_output<X, Y, E>(
+        sender: &signer,
+        dex_type: u8,
+        pool_type: u64,
+        max_in: u64,
+        amount_out: u64,
+    ){
+
+    }
+
+    public fun swap_with_fixed_output_direct<InputCoin, OutputCoin, E>(
+        dex_type: u8,
+        pool_type: u64,
+        is_x_to_y: bool,
+        max_in: u64,
+        amount_out: u64,
+        coin_in: Coin<InputCoin>,
+    ):(Coin<InputCoin>,Coin<OutputCoin>){
+        if (dex_type == DEX_HIPPO) {
+            abort E_UNKNOWN_DEX
+        }
+        /*
+        else if (dex_type == DEX_ECONIA) {
+
+        }*/
+        else if (dex_type == DEX_PONTEM) {
+            use liquidswap::router;
+            router::swap_coin_for_exact_coin<InputCoin, OutputCoin, E>(coin_in, amount_out)
+        }
+        /*
+        else if (dex_type == DEX_BASIQ) {
+            use basiq::dex;
+            (option::none(), dex::swap<X, Y>(x_in))
+        }
+        */
+        else if (dex_type == DEX_APTOSWAP) {
+           abort E_UNSUPPORTED_FIXEDOUT_SWAP
+        }
+        else if (dex_type == DEX_AUX) {
+            if (pool_type == AUX_TYPE_AMM){
+                use aux::amm;
+                let coin_out = coin::zero<OutputCoin>();
+                amm::swap_coin_for_exact_coin_mut(
+                    @hippo_aggregator,
+                    &mut coin_in,
+                    &mut coin_out,
+                    max_in,
+                    amount_out,
+                    false,
+                    0,
+                    0
+                )
+            }
+            else if (pool_type == AUX_TYPE_MARKET){
+                abort E_UNSUPPORTED_FIXEDOUT_SWAP
+            }
+            else {
+                abort E_UNKNOWN_POOL_TYPE
+            }
+        }
+        // else if (dex_type == DEX_ANIMESWAP) {
+        //
+        // }
+        // else if (dex_type == DEX_CETUS){
+        //
+        // }
+        /*else if (dex_type == DEX_PANCAKE){
+
+        }*/
+        else {
+            abort E_UNKNOWN_DEX
+        };
+        (coin::zero<InputCoin>(), coin::zero<OutputCoin>())
     }
 
     public fun get_intermediate_output<X, Y, E>(

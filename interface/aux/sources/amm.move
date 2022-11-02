@@ -92,7 +92,22 @@ module aux::amm{
     ): (u64, u64){
         (0,0)
     }
-
+    /// Performs a swap and returns (atomic units CoinOut received, atomic units
+    /// CoinIn spent). Debits from coin_in and credits to coin_out.
+    ///
+    /// See comments for swap_coin_for_exact_coin.
+    public fun swap_coin_for_exact_coin_mut<CoinIn, CoinOut>(
+        _sender_addr: address,
+        _coin_in: &mut coin::Coin<CoinIn>,
+        _coin_out: &mut coin::Coin<CoinOut>,
+        _max_au_in: u64,
+        _au_out: u64,
+        _use_limit_price: bool,
+        _max_in_per_out_au_numerator: u128,
+        _max_in_per_out_au_denominator: u128,
+    ): (u64, u64){
+        (0, 0)
+    }
 
     /// Returns au of output token received for au of input token
     public fun au_out<CoinIn, CoinOut>(au_in: u64): u64 acquires Pool {

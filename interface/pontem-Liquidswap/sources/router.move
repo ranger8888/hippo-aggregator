@@ -8,6 +8,7 @@ module liquidswap::router {
     use liquidswap::stable_curve;
     /// Marks the unreachable place in code
     const ERR_UNREACHABLE: u64 = 207;
+
     public fun swap_exact_coin_for_coin<X, Y, LP>(
         coin_in: Coin<X>,
         _mint_out_amt: u64
@@ -15,6 +16,18 @@ module liquidswap::router {
         coin::destroy_zero(coin_in);
         coin::zero<Y>()
     }
+
+    /// Swap max coin amount `X` for exact coin `Y`.
+    /// * `coin_max_in` - maximum amount of coin X to swap to get `coin_out_val` of coins Y.
+    /// * `coin_out_val` - exact amount of coin Y to get.
+    /// Returns remainder of `coin_max_in` as `Coin<X>` and `Coin<Y>`: `(Coin<X>, Coin<Y>)`.
+    public fun swap_coin_for_exact_coin<X, Y, Curve>(
+        coin_max_in: Coin<X>,
+        _coin_out_val: u64,
+    ): (Coin<X>, Coin<Y>){
+        (coin_max_in,coin::zero<Y>())
+    }
+
     /// Get amount out for `amount_in` of X coins (see generic).
     /// So if Coins::USDC is X and Coins::USDT is Y, it will get amount of USDT you will get after swap `amount_x` USDC.
     /// !Important!: This function can eat a lot of gas if you querying it for stable curve pool, so be aware.
