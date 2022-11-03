@@ -13,7 +13,7 @@ module hippo_aggregator::aggregator {
     // use ditto::staked_coin;
     // use tortuga::staked_aptos_coin;
 
-    const HI_64: u64 = 0xffffffffffffffff;
+    const MAX_U64: u64 = 0xffffffffffffffff;
 
     const DEX_HIPPO: u8 = 1;
     const DEX_ECONIA: u8 = 2;
@@ -41,6 +41,7 @@ module hippo_aggregator::aggregator {
     const E_TYPE_NOT_EQUAL: u64 = 7;
     const E_COIN_STORE_NOT_EXITES: u64 = 8;
     const E_UNSUPPORTED_NUM_STEPS: u64 = 9;
+    const E_UNSUPPORTED: u64 = 10;
 
 
     struct EventStore has key {
@@ -217,16 +218,20 @@ module hippo_aggregator::aggregator {
             } else if (pool_type == AUX_TYPE_MARKET){
                 use aux::clob_market;
                 let y_out = coin::zero<Y>();
-                clob_market::place_market_order_mut(
-                    @hippo_aggregator,
-                    &mut x_in,
-                    &mut y_out,
-                    false,
-                    102,// IMMEDIATE_OR_CANCEL in aux::router,
-                    0,
-                    coin_in_value,
-                    0
-                );
+                if (is_x_to_y){
+                    clob_market::place_market_order_mut<X, Y>(
+                        @hippo_aggregator,
+                        &mut x_in,
+                        &mut y_out,
+                        false,
+                        102,// IMMEDIATE_OR_CANCEL in aux::router,
+                        0,
+                        coin_in_value,
+                        0
+                    );
+                } else {
+                    abort E_UNSUPPORTED
+                };
                 (option::some(x_in),y_out)
             } else {
                 abort E_UNKNOWN_POOL_TYPE
@@ -261,6 +266,18 @@ module hippo_aggregator::aggregator {
             coin::value(&y_out)
         );
         (x_out_opt, y_out)
+    }
+
+    public fun exp(a: u128, b: u128): u128 {
+        let c = 1;
+
+        while (b > 0) {
+            if (b & 1 > 0) c = c * a;
+            b = b >> 1;
+            a = a * a;
+        };
+
+        c
     }
 
     fun check_and_deposit_opt<X>(sender: &signer, coin_opt: Option<coin::Coin<X>>) {
