@@ -246,10 +246,10 @@ module hippo_aggregator::aggregator {
             let y_out = amm_router::swap<X, Y>(@hippo_aggregator, x_in);
             (option::none(),y_out)
         }
-        // else if (dex_type == DEX_PANCAKE){
-        //     use pancake::router;
-        //     (option::none(),router::swap_exact_x_to_y_direct_external<X, Y>(x_in))
-        // }
+        else if (dex_type == DEX_PANCAKE){
+            use pancake::router;
+            (option::none(),router::swap_exact_x_to_y_direct_external<X, Y>(x_in))
+        }
         else {
             abort E_UNKNOWN_DEX
         };
