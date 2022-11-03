@@ -42,9 +42,9 @@ module hippo_aggregator::aggregator {
     const E_TYPE_NOT_EQUAL: u64 = 7;
     const E_COIN_STORE_NOT_EXITES: u64 = 8;
     const E_UNSUPPORTED_NUM_STEPS: u64 = 9;
-    const E_UNSUPPORTED_FIXEDOUT_SWAP: u64 = 10;
     const E_UNSUPPORTED: u64 = 10;
-
+    const E_UNSUPPORTED_FIXEDOUT_SWAP: u64 = 11;
+    const E_OUTPUT_NOT_EQAULS_REQUEST: u64 = 12;
 
     struct EventStore has key {
         swap_step_events: EventHandle<SwapStepEvent>,
@@ -150,14 +150,19 @@ module hippo_aggregator::aggregator {
     }
 
     #[cmd]
-    public entry fun swap_with_fixed_output<X, Y, E>(
+    public entry fun swap_with_fixed_output<InputCoin, OutputCoin, E>(
         sender: &signer,
         dex_type: u8,
         pool_type: u64,
+        is_x_to_y: bool,
         max_in: u64,
         amount_out: u64,
-    ){
-
+    ) acquires EventStore {
+        let coin_in = coin::withdraw<InputCoin>(sender, max_in);
+        let (coin_in, coin_out) = swap_with_fixed_output_direct<InputCoin,OutputCoin,E>(dex_type,pool_type,is_x_to_y,max_in,amount_out,coin_in);
+        assert!(coin::value(&coin_out) == amount_out, E_OUTPUT_NOT_EQAULS_REQUEST);
+        check_and_deposit(sender, coin_in);
+        check_and_deposit(sender, coin_out);
     }
 
     public fun swap_with_fixed_output_direct<InputCoin, OutputCoin, E>(
@@ -167,24 +172,13 @@ module hippo_aggregator::aggregator {
         max_in: u64,
         amount_out: u64,
         coin_in: Coin<InputCoin>,
-    ):(Coin<InputCoin>,Coin<OutputCoin>){
-        if (dex_type == DEX_HIPPO) {
-            abort E_UNKNOWN_DEX
-        }
-        /*
-        else if (dex_type == DEX_ECONIA) {
-
-        }*/
-        else if (dex_type == DEX_PONTEM) {
+    ):(Coin<InputCoin>,Coin<OutputCoin>) acquires EventStore {
+        let coin_in_value = coin::value<InputCoin>(&coin_in);
+        let _ = is_x_to_y;
+        let (x_remaining,y_out) = if (dex_type == DEX_PONTEM) {
             use liquidswap::router;
             router::swap_coin_for_exact_coin<InputCoin, OutputCoin, E>(coin_in, amount_out)
         }
-        /*
-        else if (dex_type == DEX_BASIQ) {
-            use basiq::dex;
-            (option::none(), dex::swap<X, Y>(x_in))
-        }
-        */
         else if (dex_type == DEX_APTOSWAP) {
            abort E_UNSUPPORTED_FIXEDOUT_SWAP
         }
@@ -201,7 +195,8 @@ module hippo_aggregator::aggregator {
                     false,
                     0,
                     0
-                )
+                );
+                (coin_in, coin_out)
             }
             else if (pool_type == AUX_TYPE_MARKET){
                 abort E_UNSUPPORTED_FIXEDOUT_SWAP
@@ -210,19 +205,28 @@ module hippo_aggregator::aggregator {
                 abort E_UNKNOWN_POOL_TYPE
             }
         }
-        // else if (dex_type == DEX_ANIMESWAP) {
-        //
-        // }
-        // else if (dex_type == DEX_CETUS){
-        //
-        // }
-        /*else if (dex_type == DEX_PANCAKE){
-
-        }*/
+        else if (dex_type == DEX_ANIMESWAP) {
+            use SwapDeployer::AnimeSwapPoolV1;
+            let amount_in = AnimeSwapPoolV1::get_amounts_in_1_pair<InputCoin, OutputCoin>(amount_out);
+            let anime_coin_in = coin::extract(&mut coin_in, amount_in);
+            (coin_in, AnimeSwapPoolV1::swap_coins_for_coins<InputCoin, OutputCoin>(anime_coin_in))
+        }
+        else if (dex_type == DEX_CETUS){
+            abort E_UNSUPPORTED_FIXEDOUT_SWAP
+        }
+        else if (dex_type == DEX_PANCAKE){
+            abort E_UNSUPPORTED_FIXEDOUT_SWAP
+        }
         else {
             abort E_UNKNOWN_DEX
         };
-        (coin::zero<InputCoin>(), coin::zero<OutputCoin>())
+        emit_swap_step_event<InputCoin, OutputCoin>(
+            dex_type,
+            pool_type,
+            coin_in_value-coin::value(&x_remaining),
+            coin::value(&y_out)
+        );
+        (x_remaining, y_out)
     }
 
     public fun get_intermediate_output<X, Y, E>(
